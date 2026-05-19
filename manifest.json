@@ -1,0 +1,13 @@
+{
+  "name": "CutListIQ",
+  "short_name": "CutListIQ",
+  "description": "Smart panel and board cut list optimizer",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1112",
+  "theme_color": "#0f1112",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

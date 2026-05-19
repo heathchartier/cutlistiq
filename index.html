@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CutListIQ</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CutListIQ">
+<meta name="theme-color" content="#0f1112">
+<meta name="mobile-web-app-capable" content="yes">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px}
+body{background:#0f1112;color:#f0f2f5;font-family:'Barlow',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+
+header{background:#1a1d21;border-bottom:2px solid #00e5b8;padding:0 20px;display:flex;align-items:center;gap:12px;height:50px;position:sticky;top:0;z-index:100;flex-shrink:0}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.45rem;letter-spacing:.03em;text-transform:uppercase;color:#00e5b8;white-space:nowrap}
+.logo span{color:#f0f2f5}
+.header-sep{flex:1}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:4px;border:1.5px solid #3a4149;background:#23282e;color:#f0f2f5;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.88rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{border-color:#00e5b8;color:#00e5b8}
+.btn-primary{background:#00e5b8;border-color:#00e5b8;color:#0f1112;font-weight:700}
+.btn-primary:hover{background:#33eecc;border-color:#33eecc;color:#0f1112}
+.btn-sm{padding:3px 8px;font-size:.76rem}
+
+.app-body{display:grid;grid-template-columns:430px 1fr;flex:1;min-height:0;overflow:hidden}
+.sidebar{background:#1a1d21;border-right:1px solid #3a4149;display:flex;flex-direction:column;overflow-y:auto}
+.main{display:flex;flex-direction:column;overflow-y:auto;padding:18px;gap:14px;background:#0f1112}
+
+.section{border-bottom:1px solid #3a4149;padding:14px}
+.section-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#00e5b8;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+
+label{font-size:.8rem;color:#9aa3ad;display:block;margin-bottom:3px}
+input[type=text],input[type=number],select{width:100%;background:#23282e;border:1.5px solid #3a4149;color:#f0f2f5;border-radius:4px;padding:6px 8px;font-family:'DM Mono',monospace;font-size:.84rem;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+input[type=text]::placeholder,input[type=number]::placeholder{color:#9aa3ad;opacity:1}
+input:focus,select:focus{border-color:#00e5b8}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239aa3ad'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:26px;cursor:pointer;background-color:#23282e}
+select option{background:#23282e;color:#f0f2f5}
+.field{margin-bottom:9px}
+.row{display:flex;gap:8px}
+.row>*{flex:1;min-width:0}
+
+.data-table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:.75rem}
+.data-table th{background:#0f1112;color:#9aa3ad;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;padding:5px 4px;text-align:left;border-bottom:1px solid #3a4149;white-space:nowrap}
+.data-table td{padding:3px 3px;border-bottom:1px solid #3a4149;vertical-align:middle}
+.data-table tr:hover td{background:#23282e}
+.data-table input[type=text],.data-table input[type=number]{padding:3px 5px;font-size:.75rem;background:transparent;border:1.5px solid transparent;color:#f0f2f5;width:100%;min-width:0}
+.data-table input:focus{background:#0f1112;border-color:#00e5b8;border-radius:3px}
+
+.color-swatch{width:16px;height:16px;border-radius:3px;border:1px solid #3a4149;cursor:pointer;display:block}
+.del-btn{background:none;border:none;cursor:pointer;color:#9aa3ad;font-size:.9rem;padding:2px 3px;border-radius:3px;transition:color .15s;line-height:1}
+.del-btn:hover{color:#ff5c5c}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;gap:8px}
+.toggle-row>label:first-child{margin:0;color:#f0f2f5;font-size:.82rem;flex:1}
+.toggle{position:relative;width:44px;height:24px;display:inline-block;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:#3a4149;border:2px solid #5a6470;border-radius:24px;cursor:pointer;transition:background .2s,border-color .2s}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;background:#9aa3ad;border-radius:50%;transition:transform .2s,background .2s}
+.toggle input:checked+.toggle-slider{background:#00e5b8;border-color:#00e5b8}
+.toggle input:checked+.toggle-slider::before{transform:translateX(20px);background:#0f1112}
+
+.opt-selector{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.opt-card{border:1.5px solid #3a4149;border-radius:4px;padding:9px 6px;cursor:pointer;transition:all .15s;text-align:center;background:#0f1112}
+.opt-card:hover{border-color:#00e5b8}
+.opt-card.active{border-color:#00e5b8;background:#002a25}
+.opt-card-icon{font-size:1.3rem;margin-bottom:3px}
+.opt-card-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;color:#f0f2f5}
+.opt-card-desc{font-size:.68rem;color:#9aa3ad;margin-top:1px}
+
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.summary-card{background:#1a1d21;border:1px solid #3a4149;border-radius:4px;padding:11px;text-align:center}
+.summary-value{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.65rem;color:#00e5b8;letter-spacing:.02em;line-height:1}
+.summary-label{font-size:.68rem;color:#9aa3ad;margin-top:3px;text-transform:uppercase;letter-spacing:.08em}
+
+.tab-bar{display:flex;gap:2px;border-bottom:1px solid #3a4149;background:#1a1d21;padding:0 4px;flex-shrink:0}
+.tab{padding:9px 15px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:#9aa3ad;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab:hover{color:#f0f2f5}
+.tab.active{color:#00e5b8;border-bottom-color:#00e5b8}
+.tab-content{display:none;flex-direction:column;gap:12px}
+.tab-content.active{display:flex}
+
+.sheets-grid{display:flex;flex-direction:column;gap:14px}
+.sheet-card{background:#1a1d21;border:1px solid #3a4149;border-radius:4px;overflow:hidden}
+.sheet-card-header{background:#23282e;padding:7px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #3a4149;flex-wrap:wrap}
+.sheet-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.88rem;color:#00e5b8;letter-spacing:.06em;white-space:nowrap}
+.sheet-dim{font-family:'DM Mono',monospace;font-size:.75rem;color:#9aa3ad;white-space:nowrap}
+.sheet-waste-bar{flex:1;min-width:60px;height:4px;background:#3a4149;border-radius:2px;overflow:hidden}
+.sheet-waste-fill{height:100%;background:#00e5b8;border-radius:2px}
+.waste-badge{padding:3px 10px;border-radius:20px;font-family:'DM Mono',monospace;font-size:.73rem;font-weight:500;white-space:nowrap}
+.waste-good{background:rgba(77,214,140,.15);color:#4dd68c;border:1px solid #4dd68c}
+.waste-mid{background:rgba(0,229,184,.15);color:#00e5b8;border:1px solid #00e5b8}
+.waste-bad{background:rgba(255,92,92,.15);color:#ff5c5c;border:1px solid #ff5c5c}
+.sheet-count-badge{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;color:#00e5b8;background:#002a25;border:2px solid #00e5b8;border-radius:4px;padding:2px 10px;white-space:nowrap;letter-spacing:.02em}
+.sheet-canvas-wrap{padding:12px;overflow-x:auto;background:#0f1112}
+canvas.sheet-canvas{display:block;border:1px solid #3a4149;border-radius:2px;background:#fff;max-width:100%}
+
+.result-table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:.79rem}
+.result-table th{background:#23282e;color:#9aa3ad;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;padding:6px 9px;text-align:left;border-bottom:2px solid #3a4149;white-space:nowrap}
+.result-table td{padding:5px 9px;border-bottom:1px solid #3a4149;color:#f0f2f5}
+.result-table tr:hover td{background:#23282e}
+.part-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;flex-shrink:0}
+
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:240px;color:#9aa3ad;border:1.5px dashed #3a4149;border-radius:4px;text-align:center;padding:28px}
+.empty-icon{font-size:2.8rem;opacity:.25}
+.empty-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.05rem;color:#9aa3ad;letter-spacing:.04em}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#0f1112}
+::-webkit-scrollbar-thumb{background:#3a4149;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#9aa3ad}
+
+@media print{
+header,.sidebar,.tab-bar,#results-empty,.btn{display:none!important}
+.app-body{display:block}
+.main{padding:0;background:#fff;color:#000}
+.sheet-card{border:1px solid #ccc;break-inside:avoid;margin-bottom:12px}
+.sheet-card-header{background:#f5f5f5}
+.sheet-num,.sheet-dim{color:#000}
+.sheet-canvas-wrap{background:#fff}
+.tab-content{display:flex!important}
+.result-table th{background:#eee;color:#333}
+.result-table td{color:#000}
+.summary-card{border:1px solid #ccc;background:#fff}
+.summary-value{color:#333}
+.summary-label{color:#666}
+}
+</style>
+
+</head>
+<body>
+
+<header>
+  <div class="logo">CutList<span>IQ</span></div>
+  <div class="header-sep"></div>
+  <button class="btn" onclick="clearAll()">⟳ Reset</button>
+  <button class="btn" onclick="savePDF()">⬇ Save PDF</button>
+  <button class="btn" onclick="window.print()">⎙ Print</button>
+  <button class="btn btn-primary" onclick="optimize()">▶ Optimize</button>
+</header>
+
+<div class="app-body">
+  <aside class="sidebar">
+
+<!-- STOCK SHEETS -->
+<div class="section">
+  <div class="section-title">
+    Stock Sheets
+    <button class="btn btn-sm" onclick="addStock()">+ Add</button>
+  </div>
+  <table class="data-table">
+    <thead><tr>
+      <th style="width:64px">Width</th>
+      <th style="width:64px">Length</th>
+      <th style="width:64px">Qty</th>
+      <th>Material</th>
+      <th style="width:22px"></th>
+    </tr></thead>
+    <tbody id="stock-body"></tbody>
+  </table>
+</div>
+
+<!-- PARTS -->
+<div class="section">
+  <div class="section-title">
+    Parts / Cuts
+    <button class="btn btn-sm" onclick="addPart()">+ Add</button>
+  </div>
+  <table class="data-table">
+    <thead><tr>
+      <th style="width:18px"></th>
+      <th style="min-width:68px">Label</th>
+      <th style="width:58px">Width</th>
+      <th style="width:58px">Length</th>
+      <th style="width:52px">Qty</th>
+      <th style="width:24px" title="Allow Rotation">⊞</th>
+      <th id="eb-col-header" style="width:104px;display:none">T&nbsp;B&nbsp;L&nbsp;R</th>
+      <th style="width:22px"></th>
+    </tr></thead>
+    <tbody id="parts-body"></tbody>
+  </table>
+</div>
+
+<!-- SETTINGS -->
+<div class="section">
+  <div class="section-title">Settings</div>
+  <div class="row">
+    <div class="field">
+      <label>Units</label>
+      <select id="units">
+        <option value="in">Inches</option>
+        <option value="mm">Millimeters</option>
+        <option value="cm">Centimeters</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Blade Kerf</label>
+      <input type="number" id="kerf" value="0.1875" step="0.0625" min="0" placeholder="0.1875">
+    </div>
+  </div>
+
+  <label style="margin-bottom:6px">Optimization Method</label>
+  <div class="opt-selector">
+    <div class="opt-card active" id="opt-nested" onclick="selectOpt('nested')">
+      <div class="opt-card-icon">🧩</div>
+      <div class="opt-card-title">Nested</div>
+      <div class="opt-card-desc">Best fit packing</div>
+    </div>
+    <div class="opt-card" id="opt-guillotine" onclick="selectOpt('guillotine')">
+      <div class="opt-card-icon">🔪</div>
+      <div class="opt-card-title">Guillotine</div>
+      <div class="opt-card-desc">Panel saw style</div>
+    </div>
+  </div>
+
+  <div class="toggle-row">
+    <label>Allow Rotation</label>
+    <label class="toggle"><input type="checkbox" id="allow-rotate" checked><span class="toggle-slider"></span></label>
+  </div>
+  <div class="toggle-row">
+    <label>Grain Direction</label>
+    <label class="toggle"><input type="checkbox" id="grain-dir"><span class="toggle-slider"></span></label>
+  </div>
+  <div class="toggle-row">
+    <label>Show Part Labels</label>
+    <label class="toggle"><input type="checkbox" id="show-labels" checked><span class="toggle-slider"></span></label>
+  </div>
+</div>
+
+<!-- EDGE BANDING -->
+<div class="section">
+  <div class="section-title">Edge Banding</div>
+  <div class="toggle-row">
+    <label>Enable Edge Banding</label>
+    <label class="toggle"><input type="checkbox" id="eb-enabled" onchange="toggleEBSection()"><span class="toggle-slider"></span></label>
+  </div>
+  <div id="eb-settings" style="display:none">
+    <div class="row" style="margin-bottom:8px">
+      <div class="field">
+        <label>Tape Thickness</label>
+        <select id="eb-thickness">
+          <option value="0.03937">1mm</option>
+          <option value="0.01969">0.5mm</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tape Color</label>
+        <select id="eb-color">
+          <option value="#a06820">Wood / Natural</option>
+          <option value="#555555">Black</option>
+          <option value="#cccccc">White</option>
+          <option value="#c0392b">Red</option>
+          <option value="#2471a3">Blue</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-size:.74rem;color:#9aa3ad;line-height:1.5;background:#0f1112;border:1px solid #3a4149;border-radius:3px;padding:7px 9px">
+      Toggle <strong style="color:#00e5b8">T B L R</strong> per part to mark which edges get tape.
+      Linear footage totals appear in the <strong style="color:#f0f2f5">Edge Banding</strong> tab.
+    </div>
+  </div>
+</div>
+
+  </aside>
+
+  <main class="main">
+
+<div id="results-empty" class="empty-state">
+  <div class="empty-icon">⬛</div>
+  <div class="empty-title">No cuts optimized yet</div>
+  <div style="font-size:.82rem;color:#9aa3ad">Add stock sheets and parts, then click <strong style="color:#00e5b8">▶ Optimize</strong></div>
+  <button class="btn btn-primary" style="margin-top:6px" onclick="loadDemo()">Load Demo Data</button>
+</div>
+
+<div id="results-panel" style="display:none;flex-direction:column;gap:14px">
+
+  <div class="summary-grid" id="summary-grid"></div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('layouts')">Sheet Layouts</button>
+    <button class="tab" onclick="switchTab('cutlist')">Cut List</button>
+    <button class="tab" onclick="switchTab('waste')">Waste Analysis</button>
+    <button class="tab" id="tab-btn-edgebanding" style="display:none" onclick="switchTab('edgebanding')">Edge Banding</button>
+  </div>
+
+  <div class="tab-content active" id="tab-layouts">
+    <div class="sheets-grid" id="sheets-grid"></div>
+  </div>
+
+  <div class="tab-content" id="tab-cutlist">
+    <table class="result-table">
+      <thead><tr id="cut-list-head"></tr></thead>
+      <tbody id="cut-list-body"></tbody>
+    </table>
+  </div>
+
+  <div class="tab-content" id="tab-waste">
+    <div class="summary-grid" id="waste-summary-grid"></div>
+    <div id="waste-per-sheet"></div>
+  </div>
+
+  <div class="tab-content" id="tab-edgebanding">
+    <div id="eb-results-content"></div>
+  </div>
+
+</div>
+
+  </main>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let stocks    = [];
+let parts     = [];
+let optMethod = 'nested';
+let results   = null;
+
+const COLORS = ['#4a9eff','#ff6b6b','#4ecb71','#f7b731','#a29bfe',
+                '#fd79a8','#00cec9','#fdcb6e','#6c5ce7','#55efc4',
+                '#e17055','#74b9ff','#fab1a0','#81ecec','#b8e994'];
+const hexColor = i => COLORS[i % COLORS.length];
+
+// ── STOCK ─────────────────────────────────────────────────────────────────────
+function addStock(w,h,qty,mat){
+  stocks.push({w:w||null,h:h||null,qty:qty||null,mat:mat||''});
+  renderStocks();
+}
+function renderStocks(){
+  const tb=document.getElementById('stock-body');
+  tb.innerHTML='';
+  stocks.forEach((s,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><input type="number" value="${s.w??''}" placeholder="49" min="1" onchange="stocks[${i}].w=this.value?+this.value:null"></td>
+      <td><input type="number" value="${s.h??''}" placeholder="97" min="1" onchange="stocks[${i}].h=this.value?+this.value:null"></td>
+      <td><input type="number" value="${s.qty??''}" placeholder="1" min="1" onchange="stocks[${i}].qty=this.value?+this.value:null"></td>
+      <td><input type="text" value="${s.mat}" placeholder='Plywood 3/4"' onchange="stocks[${i}].mat=this.value"></td>
+      <td><button class="del-btn" onclick="stocks.splice(${i},1);renderStocks()">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ── PARTS ─────────────────────────────────────────────────────────────────────
+function addPart(label,w,h,qty,rotate,eb){
+  parts.push({label:label||'',w:w||null,h:h||null,qty:qty||null,
+    rotate:rotate!==undefined?rotate:true,color:hexColor(parts.length),
+    eb:eb||{t:false,b:false,l:false,r:false}});
+  renderParts();
+}
+function toggleEB(i,side){ parts[i].eb[side]=!parts[i].eb[side]; renderParts(); }
+function pickColor(i){ parts[i].color=COLORS[(COLORS.indexOf(parts[i].color)+1)%COLORS.length]; renderParts(); }
+
+function renderParts(){
+  const ebOn=document.getElementById('eb-enabled').checked;
+  document.getElementById('eb-col-header').style.display=ebOn?'':'none';
+  const tb=document.getElementById('parts-body');
+  tb.innerHTML='';
+  parts.forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    const bs=on=>on
+      ?`width:24px;height:24px;border-radius:3px;border:2px solid #00e5b8;background:#00e5b8;color:#0f1112;font-size:.65rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;padding:0;line-height:1;flex-shrink:0;vertical-align:middle`
+      :`width:24px;height:24px;border-radius:3px;border:2px solid #5a6470;background:#23282e;color:#9aa3ad;font-size:.65rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;padding:0;line-height:1;flex-shrink:0;vertical-align:middle`;
+    const ebCell=ebOn?`<td style="padding:2px 3px;white-space:nowrap">
+      <button style="${bs(p.eb.t)}" onclick="toggleEB(${i},'t')" title="Top">T</button>
+      <button style="${bs(p.eb.b)}" onclick="toggleEB(${i},'b')" title="Bottom">B</button>
+      <button style="${bs(p.eb.l)}" onclick="toggleEB(${i},'l')" title="Left">L</button>
+      <button style="${bs(p.eb.r)}" onclick="toggleEB(${i},'r')" title="Right">R</button>
+    </td>`:'';
+    tr.innerHTML=`
+      <td style="padding:3px"><span class="color-swatch" style="background:${p.color}" onclick="pickColor(${i})"></span></td>
+      <td><input type="text" value="${p.label}" placeholder="Part name" onchange="parts[${i}].label=this.value"></td>
+      <td><input type="number" value="${p.w??''}" placeholder="18" min="0.1" step="0.25" onchange="parts[${i}].w=this.value?+this.value:null"></td>
+      <td><input type="number" value="${p.h??''}" placeholder="24" min="0.1" step="0.25" onchange="parts[${i}].h=this.value?+this.value:null"></td>
+      <td><input type="number" value="${p.qty??''}" placeholder="1" min="1" onchange="parts[${i}].qty=this.value?+this.value:null"></td>
+      <td style="text-align:center;padding:3px 2px"><input type="checkbox" ${p.rotate?'checked':''} onchange="parts[${i}].rotate=this.checked" title="Allow rotation"></td>
+      ${ebCell}
+      <td><button class="del-btn" onclick="parts.splice(${i},1);renderParts()">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function selectOpt(m){
+  optMethod=m;
+  document.getElementById('opt-guillotine').classList.toggle('active',m==='guillotine');
+  document.getElementById('opt-nested').classList.toggle('active',m==='nested');
+}
+function toggleEBSection(){
+  const on=document.getElementById('eb-enabled').checked;
+  document.getElementById('eb-settings').style.display=on?'block':'none';
+  document.getElementById('tab-btn-edgebanding').style.display=on?'':'none';
+  renderParts();
+}
+function switchTab(name){
+  const n=['layouts','cutlist','waste','edgebanding'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',n[i]===name));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+function savePDF(){
+  const s=document.createElement('style');
+  s.id='pdf-hint';s.textContent='@page{size:landscape;margin:1cm}';
+  document.head.appendChild(s);
+  window.print();
+  setTimeout(()=>{const e=document.getElementById('pdf-hint');if(e)e.remove();},1000);
+}
+
+// ── DEEP COPY a sheet state for simulation ────────────────────────────────────
+function cloneSheet(s){
+  return {
+    w:s.w,h:s.h,mat:s.mat,
+    placements:s.placements.map(p=>({...p})),
+    freeRects:s.freeRects.map(r=>({...r})),
+    stockIdx:s.stockIdx
+  };
+}
+
+// ── PLACEMENT ALGORITHMS ──────────────────────────────────────────────────────
+function tryPlace(sheet,part,kerf,allowRotate,grainDir){
+  return optMethod==='guillotine'
+    ?placeGuillotine(sheet,part,kerf,allowRotate,grainDir)
+    :placeNested(sheet,part,kerf,allowRotate,grainDir);
+}
+
+function placeGuillotine(sheet,part,kerf,allowRotate,grainDir){
+  let best=null,bestScore=Infinity;
+  const orients=[[part.w,part.h,false]];
+  if(allowRotate&&!grainDir&&part.rotate) orients.push([part.h,part.w,true]);
+  for(const[pw,ph,rotated]of orients){
+    for(const rect of sheet.freeRects){
+      if(pw+kerf<=rect.w+0.001&&ph+kerf<=rect.h+0.001){
+        const score=rect.w*rect.h-pw*ph;
+        if(score<bestScore){bestScore=score;best={x:rect.x,y:rect.y,w:pw,h:ph,rect,rotated};}
+      }
+    }
+  }
+  if(!best)return null;
+  const{rect,w:pw,h:ph}=best;
+  const rW=rect.w-pw-kerf,tH=rect.h-ph-kerf;
+  sheet.freeRects.splice(sheet.freeRects.indexOf(rect),1);
+  if(rW>tH){
+    if(tH>0.01)  sheet.freeRects.push({x:rect.x,      y:rect.y+ph+kerf,w:pw,  h:tH    });
+    if(rW>0.01)  sheet.freeRects.push({x:rect.x+pw+kerf,y:rect.y,      w:rW,  h:rect.h});
+  }else{
+    if(rW>0.01)  sheet.freeRects.push({x:rect.x+pw+kerf,y:rect.y,      w:rW,  h:ph    });
+    if(tH>0.01)  sheet.freeRects.push({x:rect.x,      y:rect.y+ph+kerf,w:rect.w,h:tH  });
+  }
+  return{x:best.x,y:best.y,w:pw,h:ph,label:part.label,color:part.color,rotated:best.rotated,partRef:part};
+}
+
+function placeNested(sheet,part,kerf,allowRotate,grainDir){
+  let best=null,bestScore=Infinity;
+  const orients=[[part.w,part.h,false]];
+  if(allowRotate&&!grainDir&&part.rotate) orients.push([part.h,part.w,true]);
+  for(const[pw,ph,rotated]of orients){
+    for(const rect of sheet.freeRects){
+      if(pw+kerf<=rect.w+0.001&&ph+kerf<=rect.h+0.001){
+        const score=rect.y*10000+rect.x;
+        if(score<bestScore){bestScore=score;best={x:rect.x,y:rect.y,w:pw,h:ph,rect,rotated};}
+      }
+    }
+  }
+  if(!best)return null;
+  const{rect,w:pw,h:ph}=best;
+  sheet.freeRects.splice(sheet.freeRects.indexOf(rect),1);
+  const rW=rect.x+rect.w-(best.x+pw+kerf);
+  const tH=rect.y+rect.h-(best.y+ph+kerf);
+  if(rW>0.01) sheet.freeRects.push({x:best.x+pw+kerf,y:rect.y,      w:rW,  h:rect.h});
+  if(tH>0.01) sheet.freeRects.push({x:rect.x,        y:best.y+ph+kerf,w:rect.w,h:tH});
+  sheet.freeRects=sheet.freeRects.filter((r,ri)=>
+    !sheet.freeRects.some((o,oi)=>oi!==ri&&o.x<=r.x&&o.y<=r.y&&o.x+o.w>=r.x+r.w&&o.y+o.h>=r.y+r.h));
+  return{x:best.x,y:best.y,w:pw,h:ph,label:part.label,color:part.color,rotated:best.rotated,partRef:part};
+}
+
+// ── OPTIMIZE ──────────────────────────────────────────────────────────────────
+function optimize(){
+  const validStocks=stocks.filter(s=>s.w>0&&s.h>0&&s.qty>0);
+  if(!validStocks.length){alert('Add at least one complete stock sheet.');return;}
+  const validParts=parts.filter(p=>p.w>0&&p.h>0&&p.qty>0);
+  if(!validParts.length){alert('Add at least one complete part.');return;}
+
+  const kerf        =parseFloat(document.getElementById('kerf').value)||0;
+  const allowRotate =document.getElementById('allow-rotate').checked;
+  const grainDir    =document.getElementById('grain-dir').checked;
+  const ebOn        =document.getElementById('eb-enabled').checked;
+  const ebThick     =ebOn?(parseFloat(document.getElementById('eb-thickness').value)||0):0;
+  const ebColorVal  =ebOn?document.getElementById('eb-color').value:null;
+
+  // Expand parts, largest area first
+  let remaining=[];
+  validParts.forEach(p=>{
+    for(let q=0;q<p.qty;q++) remaining.push({...p,id:remaining.length,eb:{...p.eb}});
+  });
+  remaining.sort((a,b)=>b.w*b.h-a.w*a.h);
+
+  const stockRemaining=validStocks.map(s=>s.qty);
+  let openSheets=[];
+  const allPlaced=[];
+  const unplaced=[];
+
+  function simulateFill(st, queue){
+    const sim={w:st.w,h:st.h,mat:st.mat,placements:[],freeRects:[{x:0,y:0,w:st.w,h:st.h}]};
+    let filled=0;
+    queue.forEach(part=>{
+      const r=tryPlace(sim,part,kerf,allowRotate,grainDir);
+      if(r){sim.placements.push(r);filled+=r.w*r.h;}
+    });
+    return {fillRatio:filled/(st.w*st.h), count:sim.placements.length};
+  }
+
+  function bestOpenSheet(part){
+    let best=null, bestScore=-1;
+    openSheets.forEach((sheet,si)=>{
+      const sim=cloneSheet(sheet);
+      const r=tryPlace(sim,part,kerf,allowRotate,grainDir);
+      if(r){
+        const used=sim.placements.reduce((a,p)=>a+p.w*p.h,0)+r.w*r.h;
+        const score=used/(sheet.w*sheet.h);
+        if(score>bestScore){bestScore=score;best={si,score};}
+      }
+    });
+    return best;
+  }
+
+  while(remaining.length>0){
+    let madeProgress=false;
+    const stillRemaining=[];
+
+    for(const part of remaining){
+      const open=bestOpenSheet(part);
+      if(open){
+        const sheet=openSheets[open.si];
+        const r=tryPlace(sheet,part,kerf,allowRotate,grainDir);
+        if(r){
+          sheet.placements.push(r);
+          allPlaced.push({...r,sheetIdx:open.si});
+          madeProgress=true;
+          continue;
+        }
+      }
+      stillRemaining.push(part);
+    }
+    remaining=stillRemaining;
+
+    if(remaining.length===0) break;
+
+    let bestStockIdx=-1, bestFill=-1;
+    validStocks.forEach((st,sti)=>{
+      if(stockRemaining[sti]<=0) return;
+      const {fillRatio}=simulateFill(st, remaining);
+      if(fillRatio>bestFill){bestFill=fillRatio;bestStockIdx=sti;}
+    });
+
+    if(bestStockIdx===-1){
+      unplaced.push(...remaining);
+      break;
+    }
+
+    stockRemaining[bestStockIdx]--;
+    const st=validStocks[bestStockIdx];
+    const ns={w:st.w,h:st.h,mat:st.mat||'Sheet',stockIdx:bestStockIdx,
+              placements:[],freeRects:[{x:0,y:0,w:st.w,h:st.h}]};
+    openSheets.push(ns);
+
+    if(!madeProgress){
+      let placedOne=false;
+      const next=[];
+      for(const part of remaining){
+        if(!placedOne){
+          const r=tryPlace(ns,part,kerf,allowRotate,grainDir);
+          if(r){
+            ns.placements.push(r);
+            allPlaced.push({...r,sheetIdx:openSheets.length-1});
+            placedOne=true;
+            continue;
+          }
+        }
+        next.push(part);
+      }
+      if(!placedOne){
+        unplaced.push(remaining[0]);
+        remaining=remaining.slice(1);
+      } else {
+        remaining=next;
+      }
+    }
+  }
+
+  const sheets=openSheets.filter(s=>s.placements.length>0);
+  const sheetMap=new Map();
+  openSheets.forEach((s,oi)=>{const ni=sheets.indexOf(s);if(ni>=0)sheetMap.set(oi,ni);});
+  const placedParts=allPlaced.map(p=>({...p,sheetIdx:sheetMap.has(p.sheetIdx)?sheetMap.get(p.sheetIdx):p.sheetIdx}));
+
+  results={sheets,placedParts,unplaced,kerf,ebOn,ebThick,ebColor:ebColorVal};
+  renderResults();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderResults(){
+  const{sheets,placedParts,unplaced,ebOn,ebThick,ebColor}=results;
+  const showLabels=document.getElementById('show-labels').checked;
+  const units=document.getElementById('units').value;
+
+  document.getElementById('results-empty').style.display='none';
+  document.getElementById('results-panel').style.display='flex';
+  document.getElementById('tab-btn-edgebanding').style.display=ebOn?'':'none';
+
+  let totalArea=0,usedArea=0;
+  sheets.forEach(s=>{totalArea+=s.w*s.h;s.placements.forEach(p=>usedArea+=p.w*p.h);});
+  const wasteArea=totalArea-usedArea;
+  const wastePct=totalArea?wasteArea/totalArea*100:0;
+
+  document.getElementById('summary-grid').innerHTML=
+    card(sheets.length,'Sheets Used')+
+    card(placedParts.length,'Parts Placed')+
+    card(wastePct.toFixed(1)+'%','Total Waste')+
+    card((100-wastePct).toFixed(1)+'%','Efficiency')+
+    (unplaced.length?cardColored(unplaced.length,'#ff5c5c','Unplaced'):'');
+
+  function sheetSignature(sheet){
+    const sorted=[...sheet.placements]
+      .sort((a,b)=>a.x-b.x||a.y-b.y)
+      .map(p=>`${p.label}@${p.x.toFixed(2)},${p.y.toFixed(2)},${p.w}x${p.h}`).join('|');
+    return `${sheet.w}x${sheet.h}|${sorted}`;
+  }
+
+  const sigMap={};
+  sheets.forEach((sheet,si)=>{
+    const sig=sheetSignature(sheet);
+    if(!sigMap[sig]){sigMap[sig]={sheet,count:0,indices:[]};}
+    sigMap[sig].count++;
+    sigMap[sig].indices.push(si);
+  });
+  const sheetGroups=Object.values(sigMap);
+
+  const sheetsGrid=document.getElementById('sheets-grid');
+  sheetsGrid.innerHTML='';
+
+  sheetGroups.forEach((group,gi)=>{
+    const sheet=group.sheet;
+    const count=group.count;
+    const sheetArea=sheet.w*sheet.h;
+    const sheetUsed=sheet.placements.reduce((s,p)=>s+p.w*p.h,0);
+    const sheetWaste=(sheetArea-sheetUsed)/sheetArea*100;
+    const wClass=sheetWaste<15?'waste-good':sheetWaste<35?'waste-mid':'waste-bad';
+    const scale=Math.min(680/sheet.w,380/sheet.h);
+    const cw=Math.round(sheet.w*scale);
+    const ch=Math.round(sheet.h*scale);
+
+    const idxList=group.indices;
+    const sheetLabel=count===1
+      ?`SHEET ${idxList[0]+1}`
+      :`SHEETS ${idxList[0]+1}–${idxList[idxList.length-1]+1}`;
+
+    const cardEl=document.createElement('div');
+    cardEl.className='sheet-card';
+    cardEl.innerHTML=`
+      <div class="sheet-card-header">
+        <span class="sheet-num">${sheetLabel}</span>
+        <span class="sheet-dim">${sheet.w} × ${sheet.h} ${units} — ${sheet.mat}</span>
+        <div class="sheet-waste-bar"><div class="sheet-waste-fill" style="width:${100-sheetWaste}%"></div></div>
+        <span class="waste-badge ${wClass}">${sheetWaste.toFixed(1)}% waste</span>
+        ${count>1?`<span class="sheet-count-badge">×${count}</span>`:''}
+      </div>
+      <div class="sheet-canvas-wrap">
+        <canvas class="sheet-canvas" id="canvas-${gi}" width="${cw}" height="${ch}"></canvas>
+      </div>`;
+    sheetsGrid.appendChild(cardEl);
+
+    setTimeout(()=>{
+      const canvas=document.getElementById(`canvas-${gi}`);
+      if(!canvas)return;
+      const ctx=canvas.getContext('2d');
+      ctx.fillStyle='#f8f4ec';
+      ctx.fillRect(0,0,cw,ch);
+
+      ctx.strokeStyle='rgba(0,0,0,.07)';ctx.lineWidth=0.5;
+      const gs=Math.max(scale*6,8);
+      for(let gx=0;gx<=cw;gx+=gs){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,ch);ctx.stroke();}
+      for(let gy=0;gy<=ch;gy+=gs){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(cw,gy);ctx.stroke();}
+
+      sheet.placements.forEach(p=>{
+        const px=p.x*scale,py=p.y*scale,pw=p.w*scale,ph=p.h*scale;
+        ctx.fillStyle=p.color+'bb';ctx.fillRect(px,py,pw,ph);
+        ctx.strokeStyle=p.color;ctx.lineWidth=1.5;
+        ctx.strokeRect(px+.75,py+.75,pw-1.5,ph-1.5);
+
+        if(ebOn&&ebThick>0&&p.partRef&&p.partRef.eb){
+          const eb=p.rotated?{t:p.partRef.eb.l,b:p.partRef.eb.r,l:p.partRef.eb.b,r:p.partRef.eb.t}:p.partRef.eb;
+          const strip=Math.max(4,ebThick*scale*8);
+          ctx.fillStyle=ebColor+'dd';
+          if(eb.t)ctx.fillRect(px,py,pw,strip);
+          if(eb.b)ctx.fillRect(px,py+ph-strip,pw,strip);
+          if(eb.l)ctx.fillRect(px,py,strip,ph);
+          if(eb.r)ctx.fillRect(px+pw-strip,py,strip,ph);
+          ctx.strokeStyle=ebColor;ctx.lineWidth=0.75;
+          if(eb.t){ctx.beginPath();ctx.moveTo(px,py+strip);ctx.lineTo(px+pw,py+strip);ctx.stroke();}
+          if(eb.b){ctx.beginPath();ctx.moveTo(px,py+ph-strip);ctx.lineTo(px+pw,py+ph-strip);ctx.stroke();}
+          if(eb.l){ctx.beginPath();ctx.moveTo(px+strip,py);ctx.lineTo(px+strip,py+ph);ctx.stroke();}
+          if(eb.r){ctx.beginPath();ctx.moveTo(px+pw-strip,py);ctx.lineTo(px+pw-strip,py+ph);ctx.stroke();}
+        }
+
+        if(showLabels&&pw>22&&ph>12){
+          const fs=Math.min(11,pw/6,ph/3);
+          ctx.fillStyle='rgba(0,0,0,.82)';
+          ctx.font=`bold ${fs}px 'Barlow Condensed',sans-serif`;
+          ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.fillText(p.rotated?`↺ ${p.label}`:p.label,px+pw/2,py+ph/2);
+          if(ph>26&&fs>6){
+            ctx.font=`${Math.min(9,pw/8,ph/5)}px 'DM Mono',monospace`;
+            ctx.fillStyle='rgba(0,0,0,.55)';
+            ctx.fillText(`${p.w}×${p.h}`,px+pw/2,py+ph/2+fs*1.1);
+          }
+        }
+      });
+
+      if(count>1){
+        ctx.fillStyle='rgba(0,229,184,0.10)';
+        ctx.fillRect(0,0,cw,ch);
+      }
+
+      ctx.strokeStyle='#444';ctx.lineWidth=2;
+      ctx.strokeRect(1,1,cw-2,ch-2);
+    },0);
+  });
+
+  // ── Cut list ──────────────────────────────────────────────────────────────
+  document.getElementById('cut-list-head').innerHTML=
+    `<th>#</th><th>Label</th><th>Width</th><th>Length</th>`+
+    (ebOn?'<th>EB Edges</th>':'')+
+    `<th>Sheet #</th><th>Rotated</th><th>Material</th>`;
+  const clBody=document.getElementById('cut-list-body');
+  clBody.innerHTML='';
+  placedParts.forEach((p,i)=>{
+    const eb=p.partRef?p.partRef.eb:{};
+    const d=p.rotated?{T:eb.l,B:eb.r,L:eb.b,R:eb.t}:{T:eb.t,B:eb.b,L:eb.l,R:eb.r};
+    const ebStr=Object.entries(d).filter(([,v])=>v).map(([k])=>k).join(' ')||'—';
+    const tr=document.createElement('tr');
+    tr.innerHTML=
+      `<td style="color:#9aa3ad">${i+1}</td>`+
+      `<td><span class="part-dot" style="background:${p.color}"></span>${p.label||'(unlabeled)'}</td>`+
+      `<td>${p.w}</td><td>${p.h}</td>`+
+      (ebOn?`<td style="color:${ebColor};font-weight:700">${ebStr}</td>`:'')+
+      `<td>Sheet ${(p.sheetIdx??0)+1}</td>`+
+      `<td style="color:#9aa3ad">${p.rotated?'↺ Yes':'No'}</td>`+
+      `<td style="color:#9aa3ad">${sheets[p.sheetIdx]?.mat||''}</td>`;
+    clBody.appendChild(tr);
+  });
+
+  // ── Waste analysis ─────────────────────────────────────────────────────────
+  document.getElementById('waste-summary-grid').innerHTML=
+    card(totalArea.toFixed(0),`Total sq ${units}`)+
+    card(usedArea.toFixed(0),`Used sq ${units}`)+
+    card(wasteArea.toFixed(0),`Waste sq ${units}`)+
+    cardColored(wastePct.toFixed(1)+'%',wastePct<15?'#4dd68c':wastePct<35?'#00e5b8':'#ff5c5c','Overall Waste');
+
+  document.getElementById('waste-per-sheet').innerHTML=
+    '<div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">'+
+    sheets.map((s,si)=>{
+      const su=s.placements.reduce((a,p)=>a+p.w*p.h,0);
+      const sw=(s.w*s.h-su)/(s.w*s.h)*100;
+      const eff=(100-sw).toFixed(1);
+      const wc=sw<15?'#4dd68c':sw<35?'#00e5b8':'#ff5c5c';
+      return`<div style="background:#1a1d21;border:1px solid #3a4149;border-radius:4px;padding:11px 14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;flex-wrap:wrap">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:#00e5b8">SHEET ${si+1}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:.75rem;color:#9aa3ad">${s.w}×${s.h} — ${s.mat}</span>
+          <span style="margin-left:auto;font-family:'DM Mono',monospace;font-size:.75rem;color:${wc}">${sw.toFixed(1)}% waste / ${eff}% used</span>
+        </div>
+        <div style="height:7px;background:#3a4149;border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${eff}%;background:${wc};border-radius:3px"></div>
+        </div>
+        <div style="margin-top:5px;font-size:.74rem;color:#9aa3ad">
+          ${s.placements.length} parts &nbsp;·&nbsp; Used: ${su.toFixed(1)} sq ${units} &nbsp;·&nbsp; Waste: ${(s.w*s.h-su).toFixed(1)} sq ${units}
+        </div>
+      </div>`;
+    }).join('')+'</div>';
+
+  // ── Edge Banding tab ───────────────────────────────────────────────────────
+  if(ebOn){
+    const toFt=val=>units==='in'?val/12:val;
+    const ftLabel=units==='in'?'lin ft':`lin ${units}`;
+    let totalLinear=0;
+    const ebRows=[];
+    placedParts.forEach(p=>{
+      const eb=p.partRef?p.partRef.eb:{};
+      const fw=p.partRef?p.partRef.w:p.w;
+      const fh=p.partRef?p.partRef.h:p.h;
+      const edges=[];let linear=0;
+      if(eb.t){edges.push('Top');   linear+=fw;}
+      if(eb.b){edges.push('Bottom');linear+=fw;}
+      if(eb.l){edges.push('Left');  linear+=fh;}
+      if(eb.r){edges.push('Right'); linear+=fh;}
+      totalLinear+=linear;
+      if(edges.length) ebRows.push({label:p.label,color:p.color,fw,fh,edges,linear});
+    });
+    const grouped={};
+    ebRows.forEach(r=>{
+      const key=`${r.label}|${r.fw}|${r.fh}|${r.edges.join(',')}`;
+      if(!grouped[key]) grouped[key]={...r,count:0,totalLinear:0};
+      grouped[key].count++;grouped[key].totalLinear+=r.linear;
+    });
+    const ebThickLabel=parseFloat(document.getElementById('eb-thickness').value)>0.03?'1mm':'0.5mm';
+    document.getElementById('eb-results-content').innerHTML=
+      `<div class="summary-grid" style="margin-bottom:14px">`+
+        card(ebRows.length,'Parts w/ EB')+
+        card(ebRows.reduce((s,r)=>s+r.edges.length,0),'Total Edges')+
+        card(toFt(totalLinear).toFixed(2),`Total ${ftLabel}`)+
+        card(ebThickLabel,'Tape Thickness')+
+      `</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#00e5b8;margin-bottom:8px">Edge Banding Schedule</div>
+      <table class="result-table">
+        <thead><tr>
+          <th>Part</th><th>Size W×L</th><th>Edges</th><th>Qty</th>
+          <th>${ftLabel}/pc</th><th>Total ${ftLabel}</th>
+        </tr></thead>
+        <tbody>
+          ${Object.values(grouped).map(r=>`<tr>
+            <td><span class="part-dot" style="background:${r.color}"></span>${r.label}</td>
+            <td style="font-family:'DM Mono',monospace">${r.fw} × ${r.fh}</td>
+            <td>${r.edges.map(e=>`<span style="display:inline-block;background:${ebColor}33;border:1px solid ${ebColor};color:${ebColor};border-radius:3px;padding:1px 5px;font-size:.68rem;font-weight:700;margin-right:2px;font-family:'Barlow Condensed',sans-serif">${e}</span>`).join('')}</td>
+            <td style="color:#f0f2f5">${r.count}</td>
+            <td style="font-family:'DM Mono',monospace">${toFt(r.linear).toFixed(3)}</td>
+            <td style="font-family:'DM Mono',monospace;color:#00e5b8;font-weight:700">${toFt(r.totalLinear).toFixed(3)}</td>
+          </tr>`).join('')}
+          <tr style="border-top:2px solid #3a4149">
+            <td colspan="5" style="text-align:right;color:#9aa3ad;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;padding-right:12px">Total Tape Required</td>
+            <td style="font-family:'DM Mono',monospace;color:#00e5b8;font-size:1.05rem;font-weight:700">${toFt(totalLinear).toFixed(2)} ${ftLabel}</td>
+          </tr>
+        </tbody>
+      </table>`;
+  }
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function card(val,label){return`<div class="summary-card"><div class="summary-value">${val}</div><div class="summary-label">${label}</div></div>`;}
+function cardColored(val,color,label){return`<div class="summary-card" style="border-color:${color}"><div class="summary-value" style="color:${color}">${val}</div><div class="summary-label">${label}</div></div>`;}
+
+// ── DEMO ──────────────────────────────────────────────────────────────────────
+function loadDemo(){
+  stocks=[];parts=[];
+  addStock(49,97,20,'Plywood 3/4"');
+  addStock(49,145,20,'Plywood 3/4"');
+  const dp=[
+    ['Panel A',24,72,18,true,{t:false,b:false,l:false,r:false}],
+    ['Panel B',24,48,5, true,{t:false,b:false,l:false,r:false}],
+    ['Panel C',15,48,36,true,{t:false,b:false,l:false,r:false}],
+    ['Panel D',15,72,18,true,{t:false,b:false,l:false,r:false}],
+    ['Panel E',30,72,12,true,{t:false,b:false,l:false,r:false}],
+  ];
+  dp.forEach(([label,w,h,qty,rotate,eb])=>addPart(label,w,h,qty,rotate,eb));
+  optimize();
+}
+
+// ── CLEAR ─────────────────────────────────────────────────────────────────────
+function clearAll(){
+  stocks=[];parts=[];results=null;
+  renderStocks();renderParts();
+  document.getElementById('results-empty').style.display='flex';
+  document.getElementById('results-panel').style.display='none';
+  document.getElementById('eb-enabled').checked=false;
+  toggleEBSection();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+addStock();addStock();
+addPart();addPart();addPart();
+</script>
+
+</body>
+</html>
