@@ -116,19 +116,34 @@ canvas.sheet-canvas{display:block;border:1px solid #3a4149;border-radius:2px;bac
 ::-webkit-scrollbar-thumb:hover{background:#9aa3ad}
 
 @media print{
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 header,.sidebar,.tab-bar,#results-empty,.btn{display:none!important}
 .app-body{display:block}
-.main{padding:0;background:#fff;color:#000}
-.sheet-card{border:1px solid #ccc;break-inside:avoid;margin-bottom:12px}
-.sheet-card-header{background:#f5f5f5}
-.sheet-num,.sheet-dim{color:#000}
-.sheet-canvas-wrap{background:#fff}
+.main{padding:8px;background:#fff;color:#000;overflow:visible}
+.sheet-card{border:1px solid #ccc;break-inside:avoid;page-break-inside:avoid;margin-bottom:10px}
+.sheet-card-header{background:#f5f5f5;padding:5px 10px}
+.sheet-num{color:#000;font-size:.8rem}
+.sheet-dim{color:#555;font-size:.75rem}
+.sheet-canvas-wrap{padding:6px;background:#fff}
+canvas.sheet-canvas{max-width:400px!important;max-height:220px!important;width:auto!important;height:auto!important}
 .tab-content{display:flex!important}
-.result-table th{background:#eee;color:#333}
-.result-table td{color:#000}
-.summary-card{border:1px solid #ccc;background:#fff}
-.summary-value{color:#333}
+.result-table{font-size:.68rem}
+.result-table th{background:#eee;color:#333;padding:3px 6px}
+.result-table td{color:#000;padding:3px 6px;border-bottom:1px solid #ddd}
+.result-table tr{break-inside:avoid;page-break-inside:avoid}
+.summary-grid{margin-bottom:10px}
+.summary-card{border:1px solid #ccc;background:#fff;padding:6px}
+.summary-value{color:#000;font-size:1.2rem}
 .summary-label{color:#666}
+.waste-badge{border:1px solid #ccc;padding:2px 6px}
+.sheet-waste-bar{display:none}
+/* Summary-only print mode */
+body.print-summary .sheets-grid{display:none!important}
+body.print-summary #tab-waste{display:none!important}
+body.print-summary #tab-edgebanding{display:none!important}
+body.print-summary #tab-cutlist{display:flex!important}
+body.print-summary .print-header{display:block!important}
+.print-header{display:none;font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:#000;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #000}
 }
 </style>
 
@@ -139,8 +154,8 @@ header,.sidebar,.tab-bar,#results-empty,.btn{display:none!important}
   <div class="logo">CutList<span>IQ</span></div>
   <div class="header-sep"></div>
   <button class="btn" onclick="clearAll()">⟳ Reset</button>
-  <button class="btn" onclick="savePDF()">⬇ Save PDF</button>
-  <button class="btn" onclick="window.print()">⎙ Print</button>
+  <button class="btn" onclick="printSummary()">⎙ Summary</button>
+  <button class="btn" onclick="savePDF()">⬇ Full PDF</button>
   <button class="btn btn-primary" onclick="optimize()">▶ Optimize</button>
 </header>
 
@@ -270,6 +285,7 @@ header,.sidebar,.tab-bar,#results-empty,.btn{display:none!important}
 
   <main class="main">
 
+<div class="print-header" id="print-header">CutListIQ — Cut List Report</div>
 <div id="results-empty" class="empty-state">
   <div class="empty-icon">⬛</div>
   <div class="empty-title">No cuts optimized yet</div>
@@ -402,11 +418,32 @@ function switchTab(name){
   document.getElementById('tab-'+name).classList.add('active');
 }
 function savePDF(){
+  document.body.classList.remove('print-summary');
   const s=document.createElement('style');
   s.id='pdf-hint';s.textContent='@page{size:landscape;margin:1cm}';
   document.head.appendChild(s);
   window.print();
   setTimeout(()=>{const e=document.getElementById('pdf-hint');if(e)e.remove();},1000);
+}
+function printSummary(){
+  if(!results){alert('Run Optimize first.');return;}
+  // Switch to cut list tab so it prints
+  switchTab('cutlist');
+  document.body.classList.add('print-summary');
+  const s=document.createElement('style');
+  s.id='pdf-hint';s.textContent='@page{size:portrait;margin:1.5cm}';
+  document.head.appendChild(s);
+  // Update print header with job info
+  const ph=document.getElementById('print-header');
+  if(ph){
+    const d=new Date().toLocaleDateString();
+    ph.textContent=`CutListIQ — Cut List Report · ${results.placedParts.length} parts · ${results.sheets.length} sheets · ${d}`;
+  }
+  window.print();
+  setTimeout(()=>{
+    document.body.classList.remove('print-summary');
+    const e=document.getElementById('pdf-hint');if(e)e.remove();
+  },1000);
 }
 
 // ── DEEP COPY a sheet state for simulation ────────────────────────────────────
@@ -864,11 +901,72 @@ function clearAll(){
   document.getElementById('results-panel').style.display='none';
   document.getElementById('eb-enabled').checked=false;
   toggleEBSection();
+  localStorage.removeItem('cutlistiq_save');
+  showSaveStatus('Cleared');
 }
 
+// ── LOCAL STORAGE SAVE / RESTORE ──────────────────────────────────────────────
+let saveTimer=null;
+function schedSave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    try{
+      const state={
+        stocks,parts,optMethod,
+        units:document.getElementById('units').value,
+        kerf:document.getElementById('kerf').value,
+        allowRotate:document.getElementById('allow-rotate').checked,
+        grainDir:document.getElementById('grain-dir').checked,
+        showLabels:document.getElementById('show-labels').checked,
+        ebEnabled:document.getElementById('eb-enabled').checked,
+        ebThickness:document.getElementById('eb-thickness').value,
+        ebColor:document.getElementById('eb-color').value
+      };
+      localStorage.setItem('cutlistiq_save',JSON.stringify(state));
+      showSaveStatus('Saved ✓');
+    }catch(e){}
+  },800);
+}
+function showSaveStatus(msg){
+  let el=document.getElementById('save-status');
+  if(!el){el=document.createElement('span');el.id='save-status';el.style.cssText='font-family:"Barlow Condensed",sans-serif;font-size:.75rem;color:#9aa3ad;letter-spacing:.04em';document.querySelector('.header-sep').after(el);}
+  el.textContent=msg;
+  setTimeout(()=>{if(el.textContent===msg)el.textContent='';},3000);
+}
+function loadSavedState(){
+  try{
+    const raw=localStorage.getItem('cutlistiq_save');
+    if(!raw)return false;
+    const s=JSON.parse(raw);
+    stocks=s.stocks||[];parts=s.parts||[];
+    optMethod=s.optMethod||'nested';
+    selectOpt(optMethod);
+    // Restore settings after DOM ready
+    setTimeout(()=>{
+      if(s.units)document.getElementById('units').value=s.units;
+      if(s.kerf)document.getElementById('kerf').value=s.kerf;
+      document.getElementById('allow-rotate').checked=s.allowRotate!==undefined?s.allowRotate:true;
+      document.getElementById('grain-dir').checked=!!s.grainDir;
+      document.getElementById('show-labels').checked=s.showLabels!==undefined?s.showLabels:true;
+      document.getElementById('eb-enabled').checked=!!s.ebEnabled;
+      if(s.ebThickness)document.getElementById('eb-thickness').value=s.ebThickness;
+      if(s.ebColor)document.getElementById('eb-color').value=s.ebColor;
+      toggleEBSection();
+    },0);
+    renderStocks();renderParts();
+    showSaveStatus('Job restored ✓');
+    return true;
+  }catch(e){return false;}
+}
+// Patch renderStocks and renderParts to auto-save on any change
+const _origRenderStocks=renderStocks;
+function renderStocks(){_origRenderStocks();schedSave();}
+const _origRenderParts=renderParts;
+function renderParts(){_origRenderParts();schedSave();}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
-addStock();addStock();
-addPart();addPart();addPart();
+const restored=loadSavedState();
+if(!restored){addStock();addStock();addPart();addPart();addPart();}
 </script>
 
 </body>
