@@ -345,6 +345,7 @@ const hexColor = i => COLORS[i % COLORS.length];
 function addStock(w,h,qty,mat){
   stocks.push({w:w||null,h:h||null,qty:qty||null,mat:mat||''});
   renderStocks();
+  schedSave();
 }
 function renderStocks(){
   const tb=document.getElementById('stock-body');
@@ -367,9 +368,10 @@ function addPart(label,w,h,qty,rotate,eb){
     rotate:rotate!==undefined?rotate:true,color:hexColor(parts.length),
     eb:eb||{t:false,b:false,l:false,r:false}});
   renderParts();
+  schedSave();
 }
-function toggleEB(i,side){ parts[i].eb[side]=!parts[i].eb[side]; renderParts(); }
-function pickColor(i){ parts[i].color=COLORS[(COLORS.indexOf(parts[i].color)+1)%COLORS.length]; renderParts(); }
+function toggleEB(i,side){ parts[i].eb[side]=!parts[i].eb[side]; renderParts(); schedSave(); }
+function pickColor(i){ parts[i].color=COLORS[(COLORS.indexOf(parts[i].color)+1)%COLORS.length]; renderParts(); schedSave(); }
 
 function renderParts(){
   const ebOn=document.getElementById('eb-enabled').checked;
@@ -404,6 +406,7 @@ function selectOpt(m){
   optMethod=m;
   document.getElementById('opt-guillotine').classList.toggle('active',m==='guillotine');
   document.getElementById('opt-nested').classList.toggle('active',m==='nested');
+  schedSave();
 }
 function toggleEBSection(){
   const on=document.getElementById('eb-enabled').checked;
@@ -958,15 +961,15 @@ function loadSavedState(){
     return true;
   }catch(e){return false;}
 }
-// Patch renderStocks and renderParts to auto-save on any change
-const _origRenderStocks=renderStocks;
-function renderStocks(){_origRenderStocks();schedSave();}
-const _origRenderParts=renderParts;
-function renderParts(){_origRenderParts();schedSave();}
-
 // ── INIT ──────────────────────────────────────────────────────────────────────
 const restored=loadSavedState();
 if(!restored){addStock();addStock();addPart();addPart();addPart();}
+
+// Auto-save whenever settings inputs change
+['units','kerf','allow-rotate','grain-dir','show-labels','eb-enabled','eb-thickness','eb-color'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('change',schedSave);
+});
 </script>
 
 </body>
