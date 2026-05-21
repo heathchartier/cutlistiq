@@ -13,6 +13,7 @@
 <meta name="theme-color" content="#0f1112">
 <meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:14px}
@@ -133,6 +134,39 @@ canvas.sheet-canvas{display:block;border:1px solid #3a4149;border-radius:2px;bac
 ::-webkit-scrollbar-thumb{background:#3a4149;border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:#9aa3ad}
 
+/* ── Import Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:#1a1d21;border:1px solid #3a4149;border-radius:8px;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #3a4149;flex-shrink:0}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.08em;text-transform:uppercase;color:#00e5b8}
+.modal-close{background:none;border:none;color:#9aa3ad;font-size:1.3rem;cursor:pointer;padding:2px 6px;border-radius:3px;line-height:1}
+.modal-close:hover{color:#f0f2f5}
+.modal-tabs{display:flex;border-bottom:1px solid #3a4149;flex-shrink:0}
+.modal-tab{flex:1;padding:10px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:#9aa3ad;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .15s}
+.modal-tab:hover{color:#f0f2f5}
+.modal-tab.active{color:#00e5b8;border-bottom-color:#00e5b8}
+.modal-body{padding:18px;overflow-y:auto;flex:1}
+.modal-footer{padding:12px 18px;border-top:1px solid #3a4149;display:flex;gap:8px;justify-content:flex-end;flex-shrink:0}
+.drop-zone{border:2px dashed #3a4149;border-radius:6px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#0f1112}
+.drop-zone:hover,.drop-zone.drag-over{border-color:#00e5b8;background:#002a25}
+.drop-zone-icon{font-size:2rem;margin-bottom:8px;opacity:.5}
+.drop-zone-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.95rem;color:#f0f2f5;margin-bottom:4px}
+.drop-zone-sub{font-size:.76rem;color:#9aa3ad}
+.import-preview{margin-top:14px;font-size:.76rem}
+.import-preview table{width:100%;border-collapse:collapse}
+.import-preview th{background:#0f1112;color:#9aa3ad;font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;padding:4px 6px;text-align:left;border-bottom:1px solid #3a4149}
+.import-preview td{padding:3px 6px;border-bottom:1px solid #3a4149;color:#f0f2f5;font-family:'DM Mono',monospace}
+.import-status{margin-top:12px;padding:10px 14px;border-radius:4px;font-size:.8rem;display:none}
+.import-status.ok{background:rgba(0,229,184,.1);border:1px solid #00e5b8;color:#00e5b8;display:block}
+.import-status.err{background:rgba(255,92,92,.1);border:1px solid #ff5c5c;color:#ff5c5c;display:block}
+.import-status.loading{background:rgba(58,65,73,.3);border:1px solid #3a4149;color:#9aa3ad;display:block}
+.col-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.col-map-item{display:flex;flex-direction:column;gap:3px}
+.col-map-item label{font-size:.72rem;color:#9aa3ad;margin:0}
+.col-map-item select{font-size:.76rem;padding:4px 6px}
+@media(max-width:700px){.modal{max-height:95vh}.col-map{grid-template-columns:1fr}}
+
 @media print{
 *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 header,.sidebar,.tab-bar,#results-empty,.btn{display:none!important}
@@ -172,6 +206,7 @@ body.print-summary .print-header{display:block!important}
   <div class="logo">CutList<span>IQ</span></div>
   <div class="header-sep"></div>
   <button class="btn" onclick="clearAll()">⟳ Reset</button>
+  <button class="btn" onclick="openImport()">⬆ Import</button>
   <button class="btn" onclick="printSummary()">⎙ Summary</button>
   <button class="btn" onclick="savePDF()">⬇ Full PDF</button>
   <button class="btn btn-primary" onclick="optimize()">▶ Optimize</button>
@@ -346,6 +381,61 @@ body.print-summary .print-header{display:block!important}
 </div>
 
   </main>
+</div>
+
+<!-- ── IMPORT MODAL ─────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="import-modal" onclick="closeImportOnOverlay(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Import Cut List</span>
+      <button class="modal-close" onclick="closeImport()">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="itab-sheet" onclick="switchImportTab('sheet')">📊 Spreadsheet / CSV</button>
+      <button class="modal-tab" id="itab-photo" onclick="switchImportTab('photo')">📷 Photo / PDF</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- SPREADSHEET TAB -->
+      <div id="ipanel-sheet">
+        <div class="drop-zone" id="sheet-drop" onclick="document.getElementById('sheet-file').click()" ondragover="dzDrag(event,'sheet-drop')" ondragleave="dzLeave('sheet-drop')" ondrop="dzDrop(event,'sheet')">
+          <div class="drop-zone-icon">📂</div>
+          <div class="drop-zone-title">Drop your file here or click to browse</div>
+          <div class="drop-zone-sub">Excel (.xlsx, .xls), CSV, or TSV — any column names, any order</div>
+        </div>
+        <input type="file" id="sheet-file" accept=".xlsx,.xls,.csv,.tsv" style="display:none" onchange="handleSheetFile(this.files[0])">
+        <div id="sheet-col-map" style="display:none">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#00e5b8;margin:14px 0 6px">Match Columns</div>
+          <div class="col-map">
+            <div class="col-map-item"><label>Width</label><select id="map-w"><option value="">— skip —</option></select></div>
+            <div class="col-map-item"><label>Length / Height</label><select id="map-h"><option value="">— skip —</option></select></div>
+            <div class="col-map-item"><label>Quantity</label><select id="map-qty"><option value="">— skip —</option></select></div>
+            <div class="col-map-item"><label>Part Label</label><select id="map-label"><option value="">— skip —</option></select></div>
+            <div class="col-map-item"><label>Material</label><select id="map-mat"><option value="">— skip —</option></select></div>
+          </div>
+        </div>
+        <div id="sheet-preview" class="import-preview"></div>
+        <div id="sheet-status" class="import-status"></div>
+      </div>
+
+      <!-- PHOTO TAB -->
+      <div id="ipanel-photo" style="display:none">
+        <div class="drop-zone" id="photo-drop" onclick="document.getElementById('photo-file').click()" ondragover="dzDrag(event,'photo-drop')" ondragleave="dzLeave('photo-drop')" ondrop="dzDrop(event,'photo')">
+          <div class="drop-zone-icon">📷</div>
+          <div class="drop-zone-title">Drop a photo or PDF here, or click to browse</div>
+          <div class="drop-zone-sub">Handwritten lists, printed sheets, photos of cut lists — AI reads it all</div>
+        </div>
+        <input type="file" id="photo-file" accept="image/*,.pdf" capture="environment" style="display:none" onchange="handlePhotoFile(this.files[0])">
+        <div id="photo-preview" class="import-preview"></div>
+        <div id="photo-status" class="import-status"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeImport()">Cancel</button>
+      <button class="btn btn-primary" id="import-confirm" onclick="confirmImport()" disabled>Import Parts</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1004,6 +1094,269 @@ if(!restored){addStock();addStock();addPart();addPart();addPart();}
   const el=document.getElementById(id);
   if(el) el.addEventListener('change',schedSave);
 });
+
+// ── IMPORT MODAL ──────────────────────────────────────────────────────────────
+let importPending=[];  // parts staged for import
+let sheetRows=[];      // raw parsed rows from spreadsheet
+
+function openImport(){
+  document.getElementById('import-modal').classList.add('open');
+  importPending=[];
+  document.getElementById('import-confirm').disabled=true;
+  switchImportTab('sheet');
+  // reset sheet tab
+  document.getElementById('sheet-preview').innerHTML='';
+  setStatus('sheet-status','','');
+  document.getElementById('sheet-col-map').style.display='none';
+  document.getElementById('sheet-file').value='';
+  // reset photo tab
+  document.getElementById('photo-preview').innerHTML='';
+  setStatus('photo-status','','');
+  document.getElementById('photo-file').value='';
+}
+
+function closeImport(){
+  document.getElementById('import-modal').classList.remove('open');
+}
+
+function closeImportOnOverlay(e){
+  if(e.target===document.getElementById('import-modal')) closeImport();
+}
+
+function switchImportTab(tab){
+  document.getElementById('ipanel-sheet').style.display=tab==='sheet'?'':'none';
+  document.getElementById('ipanel-photo').style.display=tab==='photo'?'':'none';
+  document.getElementById('itab-sheet').classList.toggle('active',tab==='sheet');
+  document.getElementById('itab-photo').classList.toggle('active',tab==='photo');
+  importPending=[];
+  document.getElementById('import-confirm').disabled=true;
+}
+
+function setStatus(id,type,msg){
+  const el=document.getElementById(id);
+  el.className='import-status'+(type?' '+type:'');
+  el.textContent=msg;
+}
+
+// ── DRAG AND DROP ─────────────────────────────────────────────────────────────
+function dzDrag(e,id){
+  e.preventDefault();
+  document.getElementById(id).classList.add('drag-over');
+}
+function dzLeave(id){
+  document.getElementById(id).classList.remove('drag-over');
+}
+function dzDrop(e,type){
+  e.preventDefault();
+  const id=type==='sheet'?'sheet-drop':'photo-drop';
+  document.getElementById(id).classList.remove('drag-over');
+  const file=e.dataTransfer.files[0];
+  if(!file)return;
+  if(type==='sheet') handleSheetFile(file);
+  else handlePhotoFile(file);
+}
+
+// ── SPREADSHEET IMPORT ────────────────────────────────────────────────────────
+function handleSheetFile(file){
+  if(!file)return;
+  setStatus('sheet-status','loading','Reading file…');
+  document.getElementById('sheet-preview').innerHTML='';
+  document.getElementById('sheet-col-map').style.display='none';
+  importPending=[];
+  document.getElementById('import-confirm').disabled=true;
+
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const data=new Uint8Array(ev.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(raw.length<2){
+        setStatus('sheet-status','err','File appears empty or has only one row.');return;
+      }
+      const headers=raw[0].map(h=>String(h).trim());
+      sheetRows=raw.slice(1).filter(r=>r.some(c=>c!==''));
+      if(!sheetRows.length){
+        setStatus('sheet-status','err','No data rows found.');return;
+      }
+      const autoMap=autoDetectColumns(headers);
+      // Populate column selects
+      ['map-w','map-h','map-qty','map-label','map-mat'].forEach((selId,si)=>{
+        const key=['w','h','qty','label','mat'][si];
+        const sel=document.getElementById(selId);
+        sel.innerHTML='<option value="">— skip —</option>';
+        headers.forEach((hdr,hi)=>{
+          const opt=document.createElement('option');
+          opt.value=hi;
+          opt.textContent=hdr||`Column ${hi+1}`;
+          if(autoMap[key]===hi) opt.selected=true;
+          sel.appendChild(opt);
+        });
+        sel.onchange=()=>buildSheetPreview(headers,getCurrentColMap());
+      });
+      document.getElementById('sheet-col-map').style.display='';
+      buildSheetPreview(headers,autoMap);
+      setStatus('sheet-status','ok',`Found ${sheetRows.length} data rows. Adjust column mapping if needed, then click Import Parts.`);
+    }catch(err){
+      setStatus('sheet-status','err','Could not parse file: '+err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function autoDetectColumns(headers){
+  const lc=headers.map(h=>h.toLowerCase().trim());
+  const find=(...terms)=>{
+    for(const t of terms){ const i=lc.findIndex(h=>h===t);       if(i>=0)return i; }
+    for(const t of terms){ const i=lc.findIndex(h=>h.startsWith(t)); if(i>=0)return i; }
+    for(const t of terms){ if(t.length>1){const i=lc.findIndex(h=>h.includes(t));if(i>=0)return i;} }
+    return null;
+  };
+  return{
+    w:    find('width','wide','wd','w'),
+    h:    find('length','height','long','len','ht','h','l'),
+    qty:  find('qty','quantity','count','pcs','pieces','num','q'),
+    label:find('label','name','part','description','desc','item','piece'),
+    mat:  find('material','mat','species','type','grade','wood')
+  };
+}
+
+function getCurrentColMap(){
+  const v=id=>document.getElementById(id).value;
+  return{
+    w:    v('map-w')!==''    ?+v('map-w')   :null,
+    h:    v('map-h')!==''    ?+v('map-h')   :null,
+    qty:  v('map-qty')!==''  ?+v('map-qty') :null,
+    label:v('map-label')!==''?+v('map-label'):null,
+    mat:  v('map-mat')!==''  ?+v('map-mat') :null,
+  };
+}
+
+function buildSheetPreview(headers,colMap){
+  const preview=document.getElementById('sheet-preview');
+  const parsed=parseSheetRows(sheetRows,colMap);
+  if(!parsed.length){
+    preview.innerHTML='<div style="color:#9aa3ad;font-size:.76rem;margin-top:8px">No valid parts detected — make sure Width and Length columns are mapped to columns containing numbers.</div>';
+    importPending=[];
+    document.getElementById('import-confirm').disabled=true;
+    return;
+  }
+  importPending=parsed;
+  document.getElementById('import-confirm').disabled=false;
+  const show=parsed.slice(0,8);
+  const more=parsed.length-show.length;
+  preview.innerHTML=`
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#00e5b8;margin:14px 0 6px">Preview — ${parsed.length} parts</div>
+    <table><thead><tr><th>Label</th><th>Width</th><th>Length</th><th>Qty</th><th>Material</th></tr></thead>
+    <tbody>
+      ${show.map(p=>`<tr><td>${p.label||'—'}</td><td>${p.w}</td><td>${p.h}</td><td>${p.qty}</td><td>${p.mat||'—'}</td></tr>`).join('')}
+      ${more>0?`<tr><td colspan="5" style="color:#9aa3ad;text-align:center">… and ${more} more</td></tr>`:''}
+    </tbody></table>`;
+}
+
+function parseFraction(val){
+  if(val===null||val===undefined||val==='')return null;
+  const s=String(val).trim().replace(/['"]/g,'');
+  const mixed=s.match(/^(\d+)[- ](\d+)\/(\d+)$/);
+  if(mixed)return +mixed[1]+ +mixed[2]/+mixed[3];
+  const frac=s.match(/^(\d+)\/(\d+)$/);
+  if(frac)return +frac[1]/+frac[2];
+  const n=parseFloat(s);
+  return isNaN(n)?null:n;
+}
+
+function parseSheetRows(rows,colMap){
+  const out=[];
+  rows.forEach((row,ri)=>{
+    const w=colMap.w!==null?parseFraction(row[colMap.w]):null;
+    const h=colMap.h!==null?parseFraction(row[colMap.h]):null;
+    if(!w||!h||w<=0||h<=0)return;
+    const qty=Math.max(1,Math.round((colMap.qty!==null?parseFraction(row[colMap.qty]):null)||1));
+    const label=colMap.label!==null?String(row[colMap.label]||'').trim():`Part ${ri+1}`;
+    const mat=colMap.mat!==null?String(row[colMap.mat]||'').trim():'';
+    out.push({label,w,h,qty,mat});
+  });
+  return out;
+}
+
+// ── PHOTO / PDF IMPORT ────────────────────────────────────────────────────────
+function handlePhotoFile(file){
+  if(!file)return;
+  setStatus('photo-status','loading','Analyzing with AI… this may take 10–20 seconds.');
+  document.getElementById('photo-preview').innerHTML='';
+  importPending=[];
+  document.getElementById('import-confirm').disabled=true;
+
+  const reader=new FileReader();
+  reader.onload=async function(ev){
+    try{
+      const dataUrl=ev.target.result;
+      const base64=dataUrl.split(',')[1];
+      const mimeType=file.type||'image/jpeg';
+
+      const resp=await fetch('/.netlify/functions/analyze-image',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({image:base64,mimeType})
+      });
+
+      if(!resp.ok){
+        const err=await resp.json().catch(()=>({error:'Server error'}));
+        throw new Error(err.error||`HTTP ${resp.status}`);
+      }
+
+      const data=await resp.json();
+      const extracted=data.parts||[];
+
+      if(!extracted.length){
+        setStatus('photo-status','err','No cut dimensions found. Try a clearer photo or confirm the list has labeled measurements.');
+        return;
+      }
+
+      importPending=extracted
+        .map(p=>({label:p.label||'Part',w:+p.w||0,h:+p.h||0,qty:Math.max(1,Math.round(+p.qty||1)),mat:p.mat||''}))
+        .filter(p=>p.w>0&&p.h>0);
+
+      if(!importPending.length){
+        setStatus('photo-status','err','AI found entries but none had valid dimensions. Check image clarity.');
+        return;
+      }
+
+      document.getElementById('import-confirm').disabled=false;
+      setStatus('photo-status','ok',`AI found ${importPending.length} parts. Review below, then click Import Parts.`);
+
+      const show=importPending.slice(0,8);
+      const more=importPending.length-show.length;
+      document.getElementById('photo-preview').innerHTML=`
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#00e5b8;margin:14px 0 6px">AI Extracted — ${importPending.length} parts</div>
+        <table><thead><tr><th>Label</th><th>Width</th><th>Length</th><th>Qty</th><th>Material</th></tr></thead>
+        <tbody>
+          ${show.map(p=>`<tr><td>${p.label}</td><td>${p.w}</td><td>${p.h}</td><td>${p.qty}</td><td>${p.mat||'—'}</td></tr>`).join('')}
+          ${more>0?`<tr><td colspan="5" style="color:#9aa3ad;text-align:center">… and ${more} more</td></tr>`:''}
+        </tbody></table>`;
+
+    }catch(err){
+      setStatus('photo-status','err','Error: '+(err.message||'Unknown error. Is the Netlify function deployed?'));
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── CONFIRM IMPORT ────────────────────────────────────────────────────────────
+function confirmImport(){
+  if(!importPending.length)return;
+  const count=importPending.length;
+  importPending.forEach(p=>addPart(p.label,p.w,p.h,p.qty,true,{t:false,b:false,l:false,r:false}));
+  // Add a default stock sheet if none exist
+  if(!stocks.filter(s=>s.w>0&&s.h>0&&s.qty>0).length){
+    addStock(49,97,10,'Sheet Material');
+  }
+  closeImport();
+  schedSave();
+  showSaveStatus(`${count} parts imported ✓`);
+  importPending=[];
+}
 </script>
 
 </body>
