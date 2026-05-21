@@ -167,6 +167,64 @@ canvas.sheet-canvas{display:block;border:1px solid #3a4149;border-radius:2px;bac
 .col-map-item select{font-size:.76rem;padding:4px 6px}
 @media(max-width:700px){.modal{max-height:95vh}.col-map{grid-template-columns:1fr}}
 
+/* ── Mode Toggle ── */
+.mode-toggle{display:flex;background:#0f1112;border:1.5px solid #3a4149;border-radius:5px;padding:2px;gap:2px;flex-shrink:0}
+.mode-btn{padding:4px 14px;border:none;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;background:transparent;color:#9aa3ad;transition:all .15s;white-space:nowrap}
+.mode-btn.active{background:#00e5b8;color:#0f1112}
+.mode-btn:not(.active):hover{color:#f0f2f5}
+.pro-badge{display:inline-block;background:#f7b731;color:#0f1112;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.58rem;letter-spacing:.08em;padding:1px 5px;border-radius:3px;vertical-align:middle;margin-left:4px;line-height:1.4}
+
+/* ── Usage Pill ── */
+.usage-pill{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.04em;padding:3px 10px;border-radius:20px;border:1.5px solid #3a4149;color:#9aa3ad;white-space:nowrap;flex-shrink:0;cursor:default}
+.usage-pill.warn{border-color:#f7b731;color:#f7b731}
+.usage-pill.out{border-color:#ff5c5c;color:#ff5c5c;cursor:pointer}
+
+/* ── Upgrade Modal ── */
+.upgrade-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;align-items:center;justify-content:center;padding:16px}
+.upgrade-overlay.open{display:flex}
+.upgrade-card{background:#1a1d21;border:1px solid #3a4149;border-radius:10px;max-width:460px;width:100%;overflow:hidden}
+.upgrade-hero{background:linear-gradient(135deg,#002a25 0%,#001a16 100%);border-bottom:2px solid #00e5b8;padding:26px 24px 18px;text-align:center}
+.upgrade-icon{font-size:2.2rem;margin-bottom:8px}
+.upgrade-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.55rem;color:#00e5b8;letter-spacing:.04em;text-transform:uppercase}
+.upgrade-sub{font-size:.8rem;color:#9aa3ad;margin-top:4px}
+.upgrade-body{padding:20px 24px 4px}
+.upgrade-features{list-style:none;margin-bottom:16px}
+.upgrade-features li{font-size:.82rem;color:#f0f2f5;padding:5px 0;border-bottom:1px solid #3a4149;display:flex;align-items:center;gap:8px}
+.upgrade-features li::before{content:'✓';color:#00e5b8;font-weight:700;flex-shrink:0}
+.upgrade-price{text-align:center;margin-bottom:16px}
+.price-amount{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.1rem;color:#f0f2f5}
+.price-yearly{font-size:.76rem;color:#00e5b8;margin-top:3px}
+.upgrade-footer{display:flex;gap:8px;padding:14px 24px 20px}
+.upgrade-footer .btn{flex:1;justify-content:center}
+
+/* ── Pro Label ── */
+.pro-label{font-size:.58rem;font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:.1em;color:#f7b731;text-transform:uppercase;background:#2a2200;border:1px solid #f7b731;border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle;line-height:1}
+
+/* ── AI Insights Panel ── */
+.ai-panel{background:#1a1d21;border:1px solid #00e5b8;border-radius:6px;overflow:hidden}
+.ai-panel-header{background:#002a25;padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+.ai-panel-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:.1em;text-transform:uppercase;color:#00e5b8}
+.ai-panel-sub{font-size:.7rem;color:#9aa3ad;letter-spacing:.02em}
+.ai-panel-body{padding:14px;display:flex;flex-direction:column;gap:10px}
+.ai-insight{border-radius:5px;padding:11px 14px;border-left:3px solid}
+.ai-insight.tip{background:rgba(0,229,184,.07);border-color:#00e5b8}
+.ai-insight.warning{background:rgba(255,92,92,.07);border-color:#ff5c5c}
+.ai-insight.success{background:rgba(77,214,140,.07);border-color:#4dd68c}
+.ai-insight-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.ai-insight.tip .ai-insight-title{color:#00e5b8}
+.ai-insight.warning .ai-insight-title{color:#ff5c5c}
+.ai-insight.success .ai-insight-title{color:#4dd68c}
+.ai-insight-body{font-size:.8rem;color:#d0d4da;line-height:1.55}
+.ai-loading{display:flex;align-items:center;gap:10px;padding:16px;color:#9aa3ad;font-size:.82rem}
+.ai-spinner{width:18px;height:18px;border:2px solid #3a4149;border-top-color:#00e5b8;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Cost input row ── */
+.cost-input-row{display:flex;align-items:center;gap:6px}
+.cost-prefix{font-family:'DM Mono',monospace;font-size:.82rem;color:#9aa3ad;flex-shrink:0}
+
+@media(max-width:700px){.mode-btn{padding:3px 8px;font-size:.68rem}.pro-badge{display:none}}
+
 @media print{
 *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 header,.sidebar,.tab-bar,#results-empty,.btn{display:none!important}
@@ -204,7 +262,12 @@ body.print-summary .print-header{display:block!important}
 
 <header>
   <div class="logo">CutList<span>IQ</span></div>
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="mode-quick" onclick="setMode('quick')">Quick Cut</button>
+    <button class="mode-btn" id="mode-pro" onclick="setMode('pro')">Shop Pro <span class="pro-badge">PRO</span></button>
+  </div>
   <div class="header-sep"></div>
+  <span id="usage-pill" class="usage-pill" style="display:none"></span>
   <button class="btn" onclick="clearAll()">⟳ Reset</button>
   <button class="btn" onclick="openImport()">⬆ Import</button>
   <button class="btn" onclick="printSummary()">⎙ Summary</button>
@@ -335,6 +398,24 @@ body.print-summary .print-header{display:block!important}
   </div>
 </div>
 
+<!-- PROJECT INFO (Shop Pro) -->
+<div class="section" id="pro-project" style="display:none">
+  <div class="section-title">Project Info <span class="pro-label">PRO</span></div>
+  <div class="field"><label>Job Name</label><input type="text" id="proj-name" placeholder="Kitchen Cabinets — Main Floor"></div>
+  <div class="field"><label>Client</label><input type="text" id="proj-client" placeholder="Smith Residence"></div>
+  <div class="row">
+    <div class="field"><label>Date</label><input type="date" id="proj-date"></div>
+    <div class="field"><label>Quote #</label><input type="text" id="proj-quote" placeholder="Q-001"></div>
+  </div>
+</div>
+
+<!-- MATERIAL COSTS (Shop Pro) -->
+<div class="section" id="pro-costs" style="display:none">
+  <div class="section-title">Material Costs <span class="pro-label">PRO</span></div>
+  <div style="font-size:.74rem;color:#9aa3ad;margin-bottom:10px">Cost per sheet — used to calculate your total job material cost.</div>
+  <div id="cost-inputs"></div>
+</div>
+
   </aside>
 
   <main class="main">
@@ -356,6 +437,7 @@ body.print-summary .print-header{display:block!important}
     <button class="tab" onclick="switchTab('cutlist')">Cut List</button>
     <button class="tab" onclick="switchTab('waste')">Waste Analysis</button>
     <button class="tab" id="tab-btn-edgebanding" style="display:none" onclick="switchTab('edgebanding')">Edge Banding</button>
+    <button class="tab" id="tab-btn-ai" style="display:none" onclick="switchTab('ai')">✦ AI Insights</button>
   </div>
 
   <div class="tab-content active" id="tab-layouts">
@@ -378,9 +460,44 @@ body.print-summary .print-header{display:block!important}
     <div id="eb-results-content"></div>
   </div>
 
+  <div class="tab-content" id="tab-ai">
+    <div id="ai-insights-panel"></div>
+  </div>
+
 </div>
 
   </main>
+</div>
+
+<!-- ── UPGRADE MODAL ────────────────────────────────────────────────────── -->
+<div class="upgrade-overlay" id="upgrade-modal">
+  <div class="upgrade-card">
+    <div class="upgrade-hero">
+      <div class="upgrade-icon">⬛</div>
+      <div class="upgrade-title">Upgrade to Shop Pro</div>
+      <div class="upgrade-sub" id="upgrade-sub-msg">You've used your 3 free optimizations today.</div>
+    </div>
+    <div class="upgrade-body">
+      <ul class="upgrade-features">
+        <li>Unlimited optimizations — no daily limits</li>
+        <li>AI cut analysis powered by Claude Opus</li>
+        <li>Cabinet builder — generate cut lists from specs</li>
+        <li>Named project save &amp; load</li>
+        <li>Material cost calculator &amp; job quotes</li>
+        <li>Remnant / offcut tracker</li>
+        <li>Cut sequence for panel saw workflow</li>
+        <li>Branded PDF reports for clients</li>
+      </ul>
+      <div class="upgrade-price">
+        <div class="price-amount">$19<span style="font-size:1.2rem;font-weight:400;color:#9aa3ad">/mo</span></div>
+        <div class="price-yearly">or $149/year — save 35%</div>
+      </div>
+    </div>
+    <div class="upgrade-footer">
+      <button class="btn" onclick="closeUpgradeModal()">Maybe Later</button>
+      <button class="btn btn-primary" onclick="goToPro()">Start Free Trial →</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── IMPORT MODAL ─────────────────────────────────────────────────────── -->
@@ -462,6 +579,7 @@ const hexColor = i => COLORS[i % COLORS.length];
 function addStock(w,h,qty,mat){
   stocks.push({w:w||null,h:h||null,qty:qty||null,mat:mat||''});
   renderStocks();
+  if(appMode==='pro') renderCostInputs();
   schedSave();
 }
 function renderStocks(){
@@ -532,10 +650,15 @@ function toggleEBSection(){
   renderParts();
 }
 function switchTab(name){
-  const n=['layouts','cutlist','waste','edgebanding'];
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',n[i]===name));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
+  // Activate the button that calls this tab
+  document.querySelectorAll('.tab').forEach(t=>{
+    const oc=t.getAttribute('onclick')||'';
+    if(oc.includes(`'${name}'`)||oc.includes(`"${name}"`)) t.classList.add('active');
+  });
+  const tc=document.getElementById('tab-'+name);
+  if(tc) tc.classList.add('active');
 }
 function savePDF(){
   document.body.classList.remove('print-summary');
@@ -635,6 +758,12 @@ function placeNested(sheet,part,kerf,allowRotate,grainDir){
 
 // ── OPTIMIZE ──────────────────────────────────────────────────────────────────
 function optimize(){
+  // Daily limit check for Quick Cut
+  if(!canOptimize()){
+    showUpgradeModal("You've used your "+FREE_LIMIT+" free optimizations today. Upgrade to Shop Pro for unlimited access.");
+    return;
+  }
+
   const validStocks=stocks.filter(s=>s.w>0&&s.h>0&&s.qty>0);
   if(!validStocks.length){alert('Add at least one complete stock sheet.');return;}
   const validParts=parts.filter(p=>p.w>0&&p.h>0&&p.qty>0);
@@ -753,7 +882,14 @@ function optimize(){
   const placedParts=allPlaced.map(p=>({...p,sheetIdx:sheetMap.has(p.sheetIdx)?sheetMap.get(p.sheetIdx):p.sheetIdx}));
 
   results={sheets,placedParts,unplaced,kerf,ebOn,ebThick,ebColor:ebColorVal};
+  incrementUsage();
   renderResults();
+  // Trigger AI insights in Shop Pro mode
+  if(appMode==='pro'){
+    switchTab('ai');
+    const aiData=buildAIPayload(validStocks,validParts,sheets,placedParts,unplaced);
+    runAIInsights(aiData);
+  }
   // Auto-close sidebar on mobile after optimizing
   if(window.innerWidth<=700){
     const s=document.getElementById('sidebar');
@@ -772,18 +908,21 @@ function renderResults(){
   document.getElementById('results-empty').style.display='none';
   document.getElementById('results-panel').style.display='flex';
   document.getElementById('tab-btn-edgebanding').style.display=ebOn?'':'none';
+  document.getElementById('tab-btn-ai').style.display=appMode==='pro'?'':'none';
 
   let totalArea=0,usedArea=0;
   sheets.forEach(s=>{totalArea+=s.w*s.h;s.placements.forEach(p=>usedArea+=p.w*p.h);});
   const wasteArea=totalArea-usedArea;
   const wastePct=totalArea?wasteArea/totalArea*100:0;
 
+  const jobCost=calcJobCost(sheets);
   document.getElementById('summary-grid').innerHTML=
     card(sheets.length,'Sheets Used')+
     card(placedParts.length,'Parts Placed')+
     card(wastePct.toFixed(1)+'%','Total Waste')+
     card((100-wastePct).toFixed(1)+'%','Efficiency')+
-    (unplaced.length?cardColored(unplaced.length,'#ff5c5c','Unplaced'):'');
+    (unplaced.length?cardColored(unplaced.length,'#ff5c5c','Unplaced'):'')+
+    (jobCost!==null&&jobCost>0?cardColored('$'+jobCost.toFixed(2),'#f7b731','Material Cost'):'');
 
   function sheetSignature(sheet){
     const sorted=[...sheet.placements]
@@ -1022,12 +1161,16 @@ function loadDemo(){
 
 // ── CLEAR ─────────────────────────────────────────────────────────────────────
 function clearAll(){
-  stocks=[];parts=[];results=null;
+  stocks=[];parts=[];results=null;stockCosts=[];
   renderStocks();renderParts();
   document.getElementById('results-empty').style.display='flex';
   document.getElementById('results-panel').style.display='none';
   document.getElementById('eb-enabled').checked=false;
   toggleEBSection();
+  ['proj-name','proj-client','proj-date','proj-quote'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  if(appMode==='pro') renderCostInputs();
   localStorage.removeItem('cutlistiq_save');
   showSaveStatus('Cleared');
 }
@@ -1039,7 +1182,7 @@ function schedSave(){
   saveTimer=setTimeout(()=>{
     try{
       const state={
-        stocks,parts,optMethod,
+        stocks,parts,optMethod,stockCosts,appMode,
         units:document.getElementById('units').value,
         kerf:document.getElementById('kerf').value,
         allowRotate:document.getElementById('allow-rotate').checked,
@@ -1047,7 +1190,11 @@ function schedSave(){
         showLabels:document.getElementById('show-labels').checked,
         ebEnabled:document.getElementById('eb-enabled').checked,
         ebThickness:document.getElementById('eb-thickness').value,
-        ebColor:document.getElementById('eb-color').value
+        ebColor:document.getElementById('eb-color').value,
+        projName:document.getElementById('proj-name')?.value||'',
+        projClient:document.getElementById('proj-client')?.value||'',
+        projDate:document.getElementById('proj-date')?.value||'',
+        projQuote:document.getElementById('proj-quote')?.value||''
       };
       localStorage.setItem('cutlistiq_save',JSON.stringify(state));
       showSaveStatus('Saved ✓');
@@ -1066,7 +1213,9 @@ function loadSavedState(){
     if(!raw)return false;
     const s=JSON.parse(raw);
     stocks=s.stocks||[];parts=s.parts||[];
+    stockCosts=s.stockCosts||[];
     optMethod=s.optMethod||'nested';
+    if(s.appMode) appMode=s.appMode;
     selectOpt(optMethod);
     // Restore settings after DOM ready
     setTimeout(()=>{
@@ -1079,6 +1228,12 @@ function loadSavedState(){
       if(s.ebThickness)document.getElementById('eb-thickness').value=s.ebThickness;
       if(s.ebColor)document.getElementById('eb-color').value=s.ebColor;
       toggleEBSection();
+      // Restore pro fields
+      if(s.projName&&document.getElementById('proj-name')) document.getElementById('proj-name').value=s.projName;
+      if(s.projClient&&document.getElementById('proj-client')) document.getElementById('proj-client').value=s.projClient;
+      if(s.projDate&&document.getElementById('proj-date')) document.getElementById('proj-date').value=s.projDate;
+      if(s.projQuote&&document.getElementById('proj-quote')) document.getElementById('proj-quote').value=s.projQuote;
+      setMode(appMode);
     },0);
     renderStocks();renderParts();
     showSaveStatus('Job restored ✓');
@@ -1087,13 +1242,213 @@ function loadSavedState(){
 }
 // ── INIT ──────────────────────────────────────────────────────────────────────
 const restored=loadSavedState();
-if(!restored){addStock();addStock();addPart();addPart();addPart();}
+if(!restored){
+  addStock();addStock();addPart();addPart();addPart();
+  setMode('quick'); // default mode
+}
+updateUsagePill();
 
 // Auto-save whenever settings inputs change
 ['units','kerf','allow-rotate','grain-dir','show-labels','eb-enabled','eb-thickness','eb-color'].forEach(id=>{
   const el=document.getElementById(id);
   if(el) el.addEventListener('change',schedSave);
 });
+
+// Auto-save project info fields when changed
+['proj-name','proj-client','proj-date','proj-quote'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('input',schedSave);
+});
+
+// ── MODE MANAGEMENT ───────────────────────────────────────────────────────────
+let appMode=localStorage.getItem('cutlistiq_mode')||'quick';
+let stockCosts=[];
+
+function setMode(mode){
+  appMode=mode;
+  localStorage.setItem('cutlistiq_mode',mode);
+  document.getElementById('mode-quick').classList.toggle('active',mode==='quick');
+  document.getElementById('mode-pro').classList.toggle('active',mode==='pro');
+  // Show/hide pro-only sidebar sections
+  ['pro-project','pro-costs'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=mode==='pro'?'':'none';
+  });
+  // Show/hide AI tab (only after results exist)
+  const aiTab=document.getElementById('tab-btn-ai');
+  if(aiTab) aiTab.style.display=(mode==='pro'&&results)?'':'none';
+  // Update usage pill
+  updateUsagePill();
+  // Render cost inputs when switching to pro
+  if(mode==='pro'){
+    renderCostInputs();
+    // Set default project date to today
+    const pd=document.getElementById('proj-date');
+    if(pd&&!pd.value) pd.value=new Date().toISOString().slice(0,10);
+  }
+}
+
+// ── DAILY USAGE LIMIT ─────────────────────────────────────────────────────────
+const FREE_LIMIT=3;
+
+function getUsageData(){
+  const today=new Date().toDateString();
+  let d;
+  try{d=JSON.parse(localStorage.getItem('cutlistiq_usage')||'{}');}catch{d={};}
+  if(d.date!==today) d={date:today,count:0};
+  return d;
+}
+
+function incrementUsage(){
+  if(appMode==='pro') return; // pro users have no limit
+  const d=getUsageData();
+  d.count++;
+  localStorage.setItem('cutlistiq_usage',JSON.stringify(d));
+  updateUsagePill();
+}
+
+function canOptimize(){
+  if(appMode==='pro') return true;
+  return getUsageData().count<FREE_LIMIT;
+}
+
+function updateUsagePill(){
+  const pill=document.getElementById('usage-pill');
+  if(!pill) return;
+  if(appMode==='pro'){pill.style.display='none';return;}
+  const left=Math.max(0,FREE_LIMIT-getUsageData().count);
+  pill.style.display='';
+  pill.textContent=left>0?`${left} free use${left===1?'':'s'} left today`:'Daily limit reached';
+  pill.className='usage-pill'+(left===0?' out':left===1?' warn':'');
+  pill.onclick=left===0?()=>showUpgradeModal():null;
+}
+
+// ── UPGRADE MODAL ─────────────────────────────────────────────────────────────
+function showUpgradeModal(msg){
+  const sub=document.getElementById('upgrade-sub-msg');
+  if(sub) sub.textContent=msg||"You've used your "+FREE_LIMIT+" free optimizations today.";
+  document.getElementById('upgrade-modal').classList.add('open');
+}
+
+function closeUpgradeModal(){
+  document.getElementById('upgrade-modal').classList.remove('open');
+}
+
+function goToPro(){
+  // TODO: Replace with Stripe payment link when ready
+  // For now, unlocks pro mode locally so Heath can demo the features
+  closeUpgradeModal();
+  setMode('pro');
+  showSaveStatus('Shop Pro unlocked ✓');
+}
+
+// ── MATERIAL COSTS (Shop Pro) ─────────────────────────────────────────────────
+function renderCostInputs(){
+  const container=document.getElementById('cost-inputs');
+  if(!container) return;
+  container.innerHTML='';
+  const valid=stocks.filter(s=>s.w>0&&s.h>0);
+  if(!valid.length){
+    container.innerHTML='<div style="color:#9aa3ad;font-size:.76rem">Add stock sheets above first.</div>';
+    return;
+  }
+  stocks.forEach((s,i)=>{
+    if(!s.w||!s.h) return;
+    const label=s.mat?`${s.mat} (${s.w}×${s.h})`:`Sheet ${i+1} — ${s.w}"×${s.h}"`;
+    const div=document.createElement('div');
+    div.className='field';
+    div.innerHTML=`<label>${label}</label>
+      <div class="cost-input-row">
+        <span class="cost-prefix">$</span>
+        <input type="number" min="0" step="0.01" placeholder="0.00"
+          value="${stockCosts[i]||''}"
+          onchange="stockCosts[${i}]=+this.value;schedSave()"
+          style="flex:1">
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+function calcJobCost(sheets){
+  if(appMode!=='pro') return null;
+  if(!stockCosts.some(c=>c>0)) return null;
+  return sheets.reduce((total,sheet)=>{
+    const cost=stockCosts[sheet.stockIdx??0]||0;
+    return total+cost;
+  },0);
+}
+
+// ── AI INSIGHTS — Claude Opus ─────────────────────────────────────────────────
+function buildAIPayload(validStocks,validParts,sheets,placedParts,unplaced){
+  return{
+    algorithm:optMethod,
+    sheetsCount:sheets.length,
+    partsPlaced:placedParts.length,
+    unplacedCount:unplaced.length,
+    wastePct:sheets.length
+      ?(sheets.reduce((a,s)=>a+s.w*s.h,0)-sheets.reduce((a,s)=>a+s.placements.reduce((b,p)=>b+p.w*p.h,0),0))
+        /sheets.reduce((a,s)=>a+s.w*s.h,0)*100
+      :0,
+    sheets:sheets.map(s=>{
+      const used=s.placements.reduce((a,p)=>a+p.w*p.h,0);
+      return{w:s.w,h:s.h,mat:s.mat,partCount:s.placements.length,
+        waste:((s.w*s.h-used)/(s.w*s.h)*100)};
+    }),
+    parts:validParts.map(p=>({label:p.label,w:p.w,h:p.h,qty:p.qty})),
+    stockSizes:validStocks.map(s=>({w:s.w,h:s.h,mat:s.mat,qty:s.qty}))
+  };
+}
+
+async function runAIInsights(payload){
+  const panel=document.getElementById('ai-insights-panel');
+  if(!panel) return;
+  panel.innerHTML=`<div class="ai-panel">
+    <div class="ai-panel-header">
+      <span class="ai-panel-title">✦ AI Insights</span>
+      <span class="ai-panel-sub">Claude Opus is analyzing your layout…</span>
+    </div>
+    <div class="ai-loading"><div class="ai-spinner"></div>Running optimization analysis…</div>
+  </div>`;
+
+  try{
+    const resp=await fetch('/.netlify/functions/ai-optimize',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data=await resp.json();
+    renderAIInsights(data.insights||[]);
+  }catch(err){
+    panel.innerHTML=`<div class="ai-panel">
+      <div class="ai-panel-header"><span class="ai-panel-title">✦ AI Insights</span></div>
+      <div class="ai-panel-body">
+        <div class="ai-insight warning">
+          <div class="ai-insight-title">Not connected yet</div>
+          <div class="ai-insight-body">AI insights require the app to be deployed with a serverless function. Once deployed to Cloudflare or Netlify, Opus will automatically analyze every job you run.</div>
+        </div>
+      </div>
+    </div>`;
+  }
+}
+
+function renderAIInsights(insights){
+  const panel=document.getElementById('ai-insights-panel');
+  if(!panel) return;
+  const items=insights.length?insights:[{type:'success',title:'Solid layout',body:'No major optimization opportunities found. Your cut layout is already running efficiently.'}];
+  panel.innerHTML=`<div class="ai-panel">
+    <div class="ai-panel-header">
+      <span class="ai-panel-title">✦ AI Insights</span>
+      <span class="ai-panel-sub">Powered by Claude Opus</span>
+    </div>
+    <div class="ai-panel-body">
+      ${items.map(ins=>`<div class="ai-insight ${ins.type||'tip'}">
+        <div class="ai-insight-title">${ins.title}</div>
+        <div class="ai-insight-body">${ins.body}</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
 
 // ── IMPORT MODAL ──────────────────────────────────────────────────────────────
 let importPending=[];  // parts staged for import
