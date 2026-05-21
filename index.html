@@ -32,6 +32,24 @@ header{background:#1a1d21;border-bottom:2px solid #00e5b8;padding:0 20px;display
 .sidebar{background:#1a1d21;border-right:1px solid #3a4149;display:flex;flex-direction:column;overflow-y:auto}
 .main{display:flex;flex-direction:column;overflow-y:auto;padding:18px;gap:14px;background:#0f1112}
 
+/* ── Mobile toggle button (hidden on desktop) ── */
+.mob-toggle{display:none;position:fixed;bottom:20px;right:20px;z-index:200;background:#00e5b8;color:#0f1112;border:none;border-radius:50%;width:52px;height:52px;font-size:1.4rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,229,184,.4);align-items:center;justify-content:center;font-weight:700;transition:transform .15s}
+.mob-toggle:active{transform:scale(.93)}
+
+@media(max-width:700px){
+  .app-body{grid-template-columns:1fr;grid-template-rows:auto 1fr;overflow:visible}
+  .sidebar{border-right:none;border-bottom:1px solid #3a4149;max-height:0;overflow:hidden;transition:max-height .3s ease}
+  .sidebar.open{max-height:2000px}
+  .main{padding:12px;overflow-y:auto}
+  .mob-toggle{display:flex}
+  header{padding:0 12px;gap:8px}
+  .logo{font-size:1.2rem}
+  .btn{padding:5px 9px;font-size:.78rem}
+  canvas.sheet-canvas{max-width:100%!important}
+  .app-body{height:auto;min-height:calc(100vh - 50px)}
+  .data-table input[type=text],.data-table input[type=number]{font-size:.72rem}
+}
+
 .section{border-bottom:1px solid #3a4149;padding:14px}
 .section-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#00e5b8;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
 
@@ -159,8 +177,9 @@ body.print-summary .print-header{display:block!important}
   <button class="btn btn-primary" onclick="optimize()">▶ Optimize</button>
 </header>
 
+<button class="mob-toggle" id="mob-toggle" onclick="toggleSidebar()" title="Toggle inputs">⊞</button>
 <div class="app-body">
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
 
 <!-- STOCK SHEETS -->
 <div class="section">
@@ -330,6 +349,14 @@ body.print-summary .print-header{display:block!important}
 </div>
 
 <script>
+// ── MOBILE SIDEBAR ────────────────────────────────────────────────────────────
+function toggleSidebar(){
+  const s=document.getElementById('sidebar');
+  const btn=document.getElementById('mob-toggle');
+  const open=s.classList.toggle('open');
+  btn.textContent=open?'✕':'⊞';
+  btn.style.background=open?'#ff5c5c':'#00e5b8';
+}
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let stocks    = [];
 let parts     = [];
@@ -637,6 +664,13 @@ function optimize(){
 
   results={sheets,placedParts,unplaced,kerf,ebOn,ebThick,ebColor:ebColorVal};
   renderResults();
+  // Auto-close sidebar on mobile after optimizing
+  if(window.innerWidth<=700){
+    const s=document.getElementById('sidebar');
+    const btn=document.getElementById('mob-toggle');
+    if(s){s.classList.remove('open');}
+    if(btn){btn.textContent='⊞';btn.style.background='#00e5b8';}
+  }
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
