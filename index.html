@@ -38,17 +38,32 @@ header{background:#1a1d21;border-bottom:2px solid #00e5b8;padding:0 20px;display
 .mob-toggle:active{transform:scale(.93)}
 
 @media(max-width:700px){
-  .app-body{grid-template-columns:1fr;grid-template-rows:auto 1fr;overflow:visible}
-  .sidebar{border-right:none;border-bottom:1px solid #3a4149;max-height:0;overflow:hidden;transition:max-height .3s ease}
-  .sidebar.open{max-height:2000px}
-  .main{padding:12px;overflow-y:auto}
+  /* Sidebar and main are full-screen panels — only one visible at a time */
+  .app-body{display:block;position:relative;height:calc(100vh - 50px);overflow:hidden}
+  .sidebar{
+    position:absolute;inset:0;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+    border-right:none;border-bottom:none;
+    display:flex;flex-direction:column;
+    /* Remove old max-height animation */
+    max-height:none!important;transition:none!important;
+  }
+  .sidebar.mob-hidden{display:none!important}
+  .main{
+    position:absolute;inset:0;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:12px;
+    display:none;
+  }
+  .main.mob-visible{display:flex}
   .mob-toggle{display:flex}
   header{padding:0 12px;gap:8px}
   .logo{font-size:1.2rem}
   .btn{padding:5px 9px;font-size:.78rem}
   canvas.sheet-canvas{max-width:100%!important}
-  .app-body{height:auto;min-height:calc(100vh - 50px)}
   .data-table input[type=text],.data-table input[type=number]{font-size:.72rem}
+  .mode-btn{padding:3px 8px;font-size:.68rem}
+  .pro-badge{display:none}
 }
 
 .section{border-bottom:1px solid #3a4149;padding:14px}
@@ -275,9 +290,9 @@ body.print-summary .print-header{display:block!important}
   <button class="btn btn-primary" onclick="optimize()">▶ Optimize</button>
 </header>
 
-<button class="mob-toggle" id="mob-toggle" onclick="toggleSidebar()" title="Toggle inputs" style="background:#ff5c5c">✕</button>
+<button class="mob-toggle" id="mob-toggle" onclick="toggleSidebar()" title="Toggle inputs">⊞</button>
 <div class="app-body">
-  <aside class="sidebar open" id="sidebar">
+  <aside class="sidebar" id="sidebar">
 
 <!-- STOCK SHEETS -->
 <div class="section">
@@ -556,20 +571,31 @@ body.print-summary .print-header{display:block!important}
 </div>
 
 <script>
-// ── MOBILE SIDEBAR ────────────────────────────────────────────────────────────
+// ── MOBILE PANEL SWITCHER ─────────────────────────────────────────────────────
+// On mobile: sidebar and main are full-screen swappable panels.
+// Sidebar (inputs) shows by default. After optimize, main (results) shows.
+function isMobile(){ return window.innerWidth<=700; }
+
+function showMobileInputs(){
+  if(!isMobile()) return;
+  document.getElementById('sidebar').classList.remove('mob-hidden');
+  document.querySelector('.main').classList.remove('mob-visible');
+  const btn=document.getElementById('mob-toggle');
+  btn.textContent='☰ Inputs';btn.style.background='#23282e';btn.style.color='#00e5b8';
+}
+
+function showMobileResults(){
+  if(!isMobile()) return;
+  document.getElementById('sidebar').classList.add('mob-hidden');
+  document.querySelector('.main').classList.add('mob-visible');
+  const btn=document.getElementById('mob-toggle');
+  btn.textContent='☰ Edit';btn.style.background='#23282e';btn.style.color='#00e5b8';
+}
+
 function toggleSidebar(){
   const s=document.getElementById('sidebar');
-  const btn=document.getElementById('mob-toggle');
-  const open=s.classList.toggle('open');
-  btn.textContent=open?'✕':'⊞';
-  btn.style.background=open?'#ff5c5c':'#00e5b8';
-}
-function setSidebarOpen(open){
-  const s=document.getElementById('sidebar');
-  const btn=document.getElementById('mob-toggle');
-  if(!s)return;
-  s.classList.toggle('open',open);
-  if(btn){btn.textContent=open?'✕':'⊞';btn.style.background=open?'#ff5c5c':'#00e5b8';}
+  if(s.classList.contains('mob-hidden')) showMobileInputs();
+  else showMobileResults();
 }
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let stocks    = [];
@@ -905,8 +931,8 @@ function optimize(){
     const aiData=buildAIPayload(validStocks,validParts,sheets,placedParts,unplaced);
     runAIInsights(aiData);
   }
-  // Auto-close sidebar on mobile after optimizing so results are visible
-  if(window.innerWidth<=700) setSidebarOpen(false);
+  // On mobile: switch to results panel after optimizing
+  showMobileResults();
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
@@ -1167,6 +1193,9 @@ function loadDemo(){
   ];
   dp.forEach(([label,w,h,qty,rotate,eb])=>addPart(label,w,h,qty,rotate,eb));
   optimize();
+  // Demo data should NOT persist — clear any auto-saves it triggered
+  clearTimeout(saveTimer);
+  localStorage.removeItem('cutlistiq_save');
 }
 
 // ── CLEAR ─────────────────────────────────────────────────────────────────────
@@ -1183,17 +1212,18 @@ function clearAll(){
   if(appMode==='pro') renderCostInputs();
   localStorage.removeItem('cutlistiq_save');
   showSaveStatus('Cleared');
-  // On mobile, bring inputs back after reset
-  if(window.innerWidth<=700) setSidebarOpen(true);
+  showMobileInputs(); // return to inputs panel on mobile
 }
 
 // ── LOCAL STORAGE SAVE / RESTORE ──────────────────────────────────────────────
+const SAVE_VERSION=2; // bump to wipe saves from older app versions
 let saveTimer=null;
 function schedSave(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{
     try{
       const state={
+        version:SAVE_VERSION,
         stocks,parts,optMethod,stockCosts,appMode,
         units:document.getElementById('units').value,
         kerf:document.getElementById('kerf').value,
@@ -1224,6 +1254,8 @@ function loadSavedState(){
     const raw=localStorage.getItem('cutlistiq_save');
     if(!raw)return false;
     const s=JSON.parse(raw);
+    // Clear saves from older app versions (e.g. stale demo data)
+    if(s.version!==SAVE_VERSION){localStorage.removeItem('cutlistiq_save');return false;}
     stocks=s.stocks||[];parts=s.parts||[];
     stockCosts=s.stockCosts||[];
     optMethod=s.optMethod||'nested';
