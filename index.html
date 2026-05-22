@@ -285,11 +285,18 @@ body.print-summary .print-header{display:block!important}
     Stock Sheets
     <button class="btn btn-sm" onclick="addStock()">+ Add</button>
   </div>
+  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">
+    <button class="btn btn-sm" onclick="addStock(48,96,1,'Plywood 3/4&quot;')" title="Standard 4×8 sheet">4×8</button>
+    <button class="btn btn-sm" onclick="addStock(48,120,1,'Plywood 3/4&quot;')" title="4×10 sheet">4×10</button>
+    <button class="btn btn-sm" onclick="addStock(60,60,1,'MDF 3/4&quot;')" title="5×5 sheet">5×5</button>
+    <button class="btn btn-sm" onclick="addStock(60,96,1,'Melamine')" title="5×8 sheet">5×8</button>
+    <button class="btn btn-sm" onclick="addStock(48,96,1,'MDF 3/4&quot;')" title="MDF 4×8">MDF</button>
+  </div>
   <table class="data-table">
     <thead><tr>
-      <th style="width:64px">Width</th>
-      <th style="width:64px">Length</th>
-      <th style="width:64px">Qty</th>
+      <th style="width:58px">Width</th>
+      <th style="width:58px">Length</th>
+      <th style="width:46px">Qty</th>
       <th>Material</th>
       <th style="width:22px"></th>
     </tr></thead>
@@ -564,6 +571,15 @@ function toggleSidebar(){
   btn.textContent=open?'✕':'⊞';
   btn.style.background=open?'#ff5c5c':'#00e5b8';
 }
+function openSidebarOnMobile(){
+  if(window.innerWidth>700) return;
+  const s=document.getElementById('sidebar');
+  const btn=document.getElementById('mob-toggle');
+  if(s&&!s.classList.contains('open')){
+    s.classList.add('open');
+    if(btn){btn.textContent='✕';btn.style.background='#ff5c5c';}
+  }
+}
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let stocks    = [];
 let parts     = [];
@@ -582,22 +598,30 @@ function addStock(w,h,qty,mat){
   if(appMode==='pro') renderCostInputs();
   schedSave();
 }
+const MAT_HINTS=['Plywood 3/4"','MDF 3/4"','Melamine','Baltic Birch','Hardwood Ply','OSB'];
+
 function renderStocks(){
   const tb=document.getElementById('stock-body');
   tb.innerHTML='';
   stocks.forEach((s,i)=>{
     const tr=document.createElement('tr');
     tr.innerHTML=`
-      <td><input type="number" value="${s.w??''}" placeholder="49" min="1" onchange="stocks[${i}].w=this.value?+this.value:null"></td>
-      <td><input type="number" value="${s.h??''}" placeholder="97" min="1" onchange="stocks[${i}].h=this.value?+this.value:null"></td>
-      <td><input type="number" value="${s.qty??''}" placeholder="1" min="1" onchange="stocks[${i}].qty=this.value?+this.value:null"></td>
-      <td><input type="text" value="${s.mat}" placeholder='Plywood 3/4"' onchange="stocks[${i}].mat=this.value"></td>
-      <td><button class="del-btn" onclick="stocks.splice(${i},1);renderStocks()">✕</button></td>`;
+      <td><input type="number" value="${s.w??''}" placeholder="48" min="1" step="0.25"
+        onchange="stocks[${i}].w=this.value?+this.value:null;schedSave();if(appMode==='pro')renderCostInputs()"></td>
+      <td><input type="number" value="${s.h??''}" placeholder="96" min="1" step="0.25"
+        onchange="stocks[${i}].h=this.value?+this.value:null;schedSave();if(appMode==='pro')renderCostInputs()"></td>
+      <td><input type="number" value="${s.qty??''}" placeholder="1" min="1"
+        onchange="stocks[${i}].qty=this.value?+this.value:null;schedSave()"></td>
+      <td><input type="text" value="${s.mat}" placeholder="${MAT_HINTS[i%MAT_HINTS.length]}"
+        onchange="stocks[${i}].mat=this.value;schedSave();if(appMode==='pro')renderCostInputs()"></td>
+      <td><button class="del-btn" onclick="stocks.splice(${i},1);renderStocks();if(appMode==='pro')renderCostInputs()">✕</button></td>`;
     tb.appendChild(tr);
   });
 }
 
 // ── PARTS ─────────────────────────────────────────────────────────────────────
+const LABEL_HINTS=['Side Panel','Shelf','Door Panel','Drawer Front','Back Panel','Top / Bottom','Toe Kick','Face Frame Rail','Face Frame Stile','Cabinet Floor'];
+
 function addPart(label,w,h,qty,rotate,eb){
   parts.push({label:label||'',w:w||null,h:h||null,qty:qty||null,
     rotate:rotate!==undefined?rotate:true,color:hexColor(parts.length),
@@ -626,13 +650,13 @@ function renderParts(){
     </td>`:'';
     tr.innerHTML=`
       <td style="padding:3px"><span class="color-swatch" style="background:${p.color}" onclick="pickColor(${i})"></span></td>
-      <td><input type="text" value="${p.label}" placeholder="Part name" onchange="parts[${i}].label=this.value"></td>
-      <td><input type="number" value="${p.w??''}" placeholder="18" min="0.1" step="0.25" onchange="parts[${i}].w=this.value?+this.value:null"></td>
-      <td><input type="number" value="${p.h??''}" placeholder="24" min="0.1" step="0.25" onchange="parts[${i}].h=this.value?+this.value:null"></td>
-      <td><input type="number" value="${p.qty??''}" placeholder="1" min="1" onchange="parts[${i}].qty=this.value?+this.value:null"></td>
-      <td style="text-align:center;padding:3px 2px"><input type="checkbox" ${p.rotate?'checked':''} onchange="parts[${i}].rotate=this.checked" title="Allow rotation"></td>
+      <td><input type="text" value="${p.label}" placeholder="${LABEL_HINTS[i%LABEL_HINTS.length]}" onchange="parts[${i}].label=this.value;schedSave()"></td>
+      <td><input type="number" value="${p.w??''}" placeholder="W" min="0.1" step="0.25" onchange="parts[${i}].w=this.value?+this.value:null;schedSave()"></td>
+      <td><input type="number" value="${p.h??''}" placeholder="L" min="0.1" step="0.25" onchange="parts[${i}].h=this.value?+this.value:null;schedSave()"></td>
+      <td><input type="number" value="${p.qty??''}" placeholder="1" min="1" onchange="parts[${i}].qty=this.value?+this.value:null;schedSave()"></td>
+      <td style="text-align:center;padding:3px 2px"><input type="checkbox" ${p.rotate?'checked':''} onchange="parts[${i}].rotate=this.checked;schedSave()" title="Allow rotation"></td>
       ${ebCell}
-      <td><button class="del-btn" onclick="parts.splice(${i},1);renderParts()">✕</button></td>`;
+      <td><button class="del-btn" onclick="parts.splice(${i},1);renderParts();schedSave()">✕</button></td>`;
     tb.appendChild(tr);
   });
 }
@@ -1173,6 +1197,8 @@ function clearAll(){
   if(appMode==='pro') renderCostInputs();
   localStorage.removeItem('cutlistiq_save');
   showSaveStatus('Cleared');
+  // On mobile, bring inputs back into view after reset
+  openSidebarOnMobile();
 }
 
 // ── LOCAL STORAGE SAVE / RESTORE ──────────────────────────────────────────────
@@ -1244,9 +1270,12 @@ function loadSavedState(){
 const restored=loadSavedState();
 if(!restored){
   addStock();addStock();addPart();addPart();addPart();
-  setMode('quick'); // default mode
+  setMode('quick');
 }
 updateUsagePill();
+
+// On mobile: start with inputs visible, not the empty results screen
+openSidebarOnMobile();
 
 // Auto-save whenever settings inputs change
 ['units','kerf','allow-rotate','grain-dir','show-labels','eb-enabled','eb-thickness','eb-color'].forEach(id=>{
