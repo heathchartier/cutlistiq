@@ -604,6 +604,11 @@ let optMethod = 'nested';
 let results   = null;
 let appMode   = localStorage.getItem('cutlistiq_mode')||'quick';
 let stockCosts= [];
+let saveTimer = null;
+let importPending = [];
+let sheetRows     = [];
+const FREE_LIMIT  = 3;
+const SAVE_VERSION= 2;
 
 const COLORS = ['#4a9eff','#ff6b6b','#4ecb71','#f7b731','#a29bfe',
                 '#fd79a8','#00cec9','#fdcb6e','#6c5ce7','#55efc4',
@@ -1215,12 +1220,10 @@ function clearAll(){
 }
 
 // ── LOCAL STORAGE SAVE / RESTORE ──────────────────────────────────────────────
-const SAVE_VERSION=2; // bump to wipe saves from older app versions
-// Reset usage counter each version bump so testing isn't blocked
+// Reset usage counter on version bump so stale test counts don't block optimize
 if(!localStorage.getItem('cutlistiq_usage')?.includes('"v":'+SAVE_VERSION)){
   localStorage.removeItem('cutlistiq_usage');
 }
-let saveTimer=null;
 function schedSave(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{
@@ -1333,8 +1336,6 @@ function setMode(mode){
 }
 
 // ── DAILY USAGE LIMIT ─────────────────────────────────────────────────────────
-const FREE_LIMIT=3;
-
 function getUsageData(){
   const today=new Date().toDateString();
   let d;
@@ -1495,9 +1496,6 @@ function renderAIInsights(insights){
 }
 
 // ── IMPORT MODAL ──────────────────────────────────────────────────────────────
-let importPending=[];  // parts staged for import
-let sheetRows=[];      // raw parsed rows from spreadsheet
-
 function openImport(){
   document.getElementById('import-modal').classList.add('open');
   importPending=[];
