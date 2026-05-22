@@ -275,22 +275,15 @@ body.print-summary .print-header{display:block!important}
   <button class="btn btn-primary" onclick="optimize()">▶ Optimize</button>
 </header>
 
-<button class="mob-toggle" id="mob-toggle" onclick="toggleSidebar()" title="Toggle inputs">⊞</button>
+<button class="mob-toggle" id="mob-toggle" onclick="toggleSidebar()" title="Toggle inputs" style="background:#ff5c5c">✕</button>
 <div class="app-body">
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar open" id="sidebar">
 
 <!-- STOCK SHEETS -->
 <div class="section">
   <div class="section-title">
     Stock Sheets
     <button class="btn btn-sm" onclick="addStock()">+ Add</button>
-  </div>
-  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">
-    <button class="btn btn-sm" onclick="addStock(48,96,1,'Plywood 3/4&quot;')" title="Standard 4×8 sheet">4×8</button>
-    <button class="btn btn-sm" onclick="addStock(48,120,1,'Plywood 3/4&quot;')" title="4×10 sheet">4×10</button>
-    <button class="btn btn-sm" onclick="addStock(60,60,1,'MDF 3/4&quot;')" title="5×5 sheet">5×5</button>
-    <button class="btn btn-sm" onclick="addStock(60,96,1,'Melamine')" title="5×8 sheet">5×8</button>
-    <button class="btn btn-sm" onclick="addStock(48,96,1,'MDF 3/4&quot;')" title="MDF 4×8">MDF</button>
   </div>
   <table class="data-table">
     <thead><tr>
@@ -571,14 +564,12 @@ function toggleSidebar(){
   btn.textContent=open?'✕':'⊞';
   btn.style.background=open?'#ff5c5c':'#00e5b8';
 }
-function openSidebarOnMobile(){
-  if(window.innerWidth>700) return;
+function setSidebarOpen(open){
   const s=document.getElementById('sidebar');
   const btn=document.getElementById('mob-toggle');
-  if(s&&!s.classList.contains('open')){
-    s.classList.add('open');
-    if(btn){btn.textContent='✕';btn.style.background='#ff5c5c';}
-  }
+  if(!s)return;
+  s.classList.toggle('open',open);
+  if(btn){btn.textContent=open?'✕':'⊞';btn.style.background=open?'#ff5c5c':'#00e5b8';}
 }
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let stocks    = [];
@@ -606,11 +597,11 @@ function renderStocks(){
   stocks.forEach((s,i)=>{
     const tr=document.createElement('tr');
     tr.innerHTML=`
-      <td><input type="number" value="${s.w??''}" placeholder="48" min="1" step="0.25"
+      <td><input type="number" value="${s.w??''}" placeholder="Width" min="1" step="0.25"
         onchange="stocks[${i}].w=this.value?+this.value:null;schedSave();if(appMode==='pro')renderCostInputs()"></td>
-      <td><input type="number" value="${s.h??''}" placeholder="96" min="1" step="0.25"
+      <td><input type="number" value="${s.h??''}" placeholder="Length" min="1" step="0.25"
         onchange="stocks[${i}].h=this.value?+this.value:null;schedSave();if(appMode==='pro')renderCostInputs()"></td>
-      <td><input type="number" value="${s.qty??''}" placeholder="1" min="1"
+      <td><input type="number" value="${s.qty??''}" placeholder="Qty" min="1"
         onchange="stocks[${i}].qty=this.value?+this.value:null;schedSave()"></td>
       <td><input type="text" value="${s.mat}" placeholder="${MAT_HINTS[i%MAT_HINTS.length]}"
         onchange="stocks[${i}].mat=this.value;schedSave();if(appMode==='pro')renderCostInputs()"></td>
@@ -653,7 +644,7 @@ function renderParts(){
       <td><input type="text" value="${p.label}" placeholder="${LABEL_HINTS[i%LABEL_HINTS.length]}" onchange="parts[${i}].label=this.value;schedSave()"></td>
       <td><input type="number" value="${p.w??''}" placeholder="W" min="0.1" step="0.25" onchange="parts[${i}].w=this.value?+this.value:null;schedSave()"></td>
       <td><input type="number" value="${p.h??''}" placeholder="L" min="0.1" step="0.25" onchange="parts[${i}].h=this.value?+this.value:null;schedSave()"></td>
-      <td><input type="number" value="${p.qty??''}" placeholder="1" min="1" onchange="parts[${i}].qty=this.value?+this.value:null;schedSave()"></td>
+      <td><input type="number" value="${p.qty??''}" placeholder="Qty" min="1" onchange="parts[${i}].qty=this.value?+this.value:null;schedSave()"></td>
       <td style="text-align:center;padding:3px 2px"><input type="checkbox" ${p.rotate?'checked':''} onchange="parts[${i}].rotate=this.checked;schedSave()" title="Allow rotation"></td>
       ${ebCell}
       <td><button class="del-btn" onclick="parts.splice(${i},1);renderParts();schedSave()">✕</button></td>`;
@@ -914,13 +905,8 @@ function optimize(){
     const aiData=buildAIPayload(validStocks,validParts,sheets,placedParts,unplaced);
     runAIInsights(aiData);
   }
-  // Auto-close sidebar on mobile after optimizing
-  if(window.innerWidth<=700){
-    const s=document.getElementById('sidebar');
-    const btn=document.getElementById('mob-toggle');
-    if(s){s.classList.remove('open');}
-    if(btn){btn.textContent='⊞';btn.style.background='#00e5b8';}
-  }
+  // Auto-close sidebar on mobile after optimizing so results are visible
+  if(window.innerWidth<=700) setSidebarOpen(false);
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
@@ -1197,8 +1183,8 @@ function clearAll(){
   if(appMode==='pro') renderCostInputs();
   localStorage.removeItem('cutlistiq_save');
   showSaveStatus('Cleared');
-  // On mobile, bring inputs back into view after reset
-  openSidebarOnMobile();
+  // On mobile, bring inputs back after reset
+  if(window.innerWidth<=700) setSidebarOpen(true);
 }
 
 // ── LOCAL STORAGE SAVE / RESTORE ──────────────────────────────────────────────
@@ -1268,14 +1254,11 @@ function loadSavedState(){
 }
 // ── INIT ──────────────────────────────────────────────────────────────────────
 const restored=loadSavedState();
-if(!restored){
-  addStock();addStock();addPart();addPart();addPart();
-  setMode('quick');
-}
+if(!restored) setMode('quick');
+// Always ensure minimum default rows — even a restored empty state should show inputs
+if(stocks.length===0){addStock();addStock();}
+if(parts.length===0){addPart();addPart();addPart();addPart();}
 updateUsagePill();
-
-// On mobile: start with inputs visible, not the empty results screen
-openSidebarOnMobile();
 
 // Auto-save whenever settings inputs change
 ['units','kerf','allow-rotate','grain-dir','show-labels','eb-enabled','eb-thickness','eb-color'].forEach(id=>{
