@@ -302,9 +302,9 @@ body.print-summary .print-header{display:block!important}
   </div>
   <table class="data-table">
     <thead><tr>
-      <th style="width:58px">Width</th>
-      <th style="width:58px">Length</th>
-      <th style="width:46px">Qty</th>
+      <th style="width:76px">Width</th>
+      <th style="width:76px">Length</th>
+      <th style="width:58px">Qty</th>
       <th>Material</th>
       <th style="width:22px"></th>
     </tr></thead>
@@ -321,10 +321,10 @@ body.print-summary .print-header{display:block!important}
   <table class="data-table">
     <thead><tr>
       <th style="width:18px"></th>
-      <th style="min-width:68px">Label</th>
-      <th style="width:58px">Width</th>
-      <th style="width:58px">Length</th>
-      <th style="width:52px">Qty</th>
+      <th style="min-width:80px">Label</th>
+      <th style="width:72px">Width</th>
+      <th style="width:72px">Length</th>
+      <th style="width:58px">Qty</th>
       <th style="width:24px" title="Allow Rotation">⊞</th>
       <th id="eb-col-header" style="width:104px;display:none">T&nbsp;B&nbsp;L&nbsp;R</th>
       <th style="width:22px"></th>
@@ -1220,10 +1220,7 @@ function clearAll(){
 }
 
 // ── LOCAL STORAGE SAVE / RESTORE ──────────────────────────────────────────────
-// Reset usage counter on version bump so stale test counts don't block optimize
-if(!localStorage.getItem('cutlistiq_usage')?.includes('"v":'+SAVE_VERSION)){
-  localStorage.removeItem('cutlistiq_usage');
-}
+// Usage counter persists across tabs/sessions — only resets naturally at midnight
 function schedSave(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{
