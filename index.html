@@ -602,6 +602,8 @@ let stocks    = [];
 let parts     = [];
 let optMethod = 'nested';
 let results   = null;
+let appMode   = localStorage.getItem('cutlistiq_mode')||'quick';
+let stockCosts= [];
 
 const COLORS = ['#4a9eff','#ff6b6b','#4ecb71','#f7b731','#a29bfe',
                 '#fd79a8','#00cec9','#fdcb6e','#6c5ce7','#55efc4',
@@ -799,11 +801,8 @@ function placeNested(sheet,part,kerf,allowRotate,grainDir){
 
 // ── OPTIMIZE ──────────────────────────────────────────────────────────────────
 function optimize(){
-  // Daily limit check for Quick Cut
-  if(!canOptimize()){
-    showUpgradeModal("You've used your "+FREE_LIMIT+" free optimizations today. Upgrade to Shop Pro for unlimited access.");
-    return;
-  }
+  // Daily limit — show upgrade nudge but don't block (payment not wired yet)
+  if(!canOptimize()) showUpgradeModal("You've used your "+FREE_LIMIT+" free optimizations today. Upgrade to Shop Pro for unlimited access.");
 
   const validStocks=stocks.filter(s=>s.w>0&&s.h>0&&s.qty>0);
   if(!validStocks.length){alert('Add at least one complete stock sheet.');return;}
@@ -1217,6 +1216,10 @@ function clearAll(){
 
 // ── LOCAL STORAGE SAVE / RESTORE ──────────────────────────────────────────────
 const SAVE_VERSION=2; // bump to wipe saves from older app versions
+// Reset usage counter each version bump so testing isn't blocked
+if(!localStorage.getItem('cutlistiq_usage')?.includes('"v":'+SAVE_VERSION)){
+  localStorage.removeItem('cutlistiq_usage');
+}
 let saveTimer=null;
 function schedSave(){
   clearTimeout(saveTimer);
@@ -1305,9 +1308,6 @@ updateUsagePill();
 });
 
 // ── MODE MANAGEMENT ───────────────────────────────────────────────────────────
-let appMode=localStorage.getItem('cutlistiq_mode')||'quick';
-let stockCosts=[];
-
 function setMode(mode){
   appMode=mode;
   localStorage.setItem('cutlistiq_mode',mode);
