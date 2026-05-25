@@ -1466,8 +1466,8 @@ async function runAIInsights(payload){
       <div class="ai-panel-header"><span class="ai-panel-title">✦ AI Insights</span></div>
       <div class="ai-panel-body">
         <div class="ai-insight warning">
-          <div class="ai-insight-title">Not connected yet</div>
-          <div class="ai-insight-body">AI insights require the app to be deployed with a serverless function. Once deployed to Cloudflare or Netlify, Opus will automatically analyze every job you run.</div>
+          <div class="ai-insight-title">AI analysis unavailable</div>
+          <div class="ai-insight-body">Could not reach the AI service. Error: ${err.message||'Unknown error'}. Please try running the optimization again.</div>
         </div>
       </div>
     </div>`;
