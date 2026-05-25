@@ -1453,7 +1453,7 @@ async function runAIInsights(payload){
   </div>`;
 
   try{
-    const resp=await fetch('/.netlify/functions/ai-optimize',{
+    const resp=await fetch('/api/ai-optimize',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(payload)
@@ -1689,7 +1689,7 @@ function handlePhotoFile(file){
       const base64=dataUrl.split(',')[1];
       const mimeType=file.type||'image/jpeg';
 
-      const resp=await fetch('/.netlify/functions/analyze-image',{
+      const resp=await fetch('/api/analyze-image',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({image:base64,mimeType})
