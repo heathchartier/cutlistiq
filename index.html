@@ -14,6 +14,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:14px}
@@ -218,6 +219,28 @@ canvas.sheet-canvas{display:block;border:1px solid #3a4149;border-radius:2px;bac
 .promo-field:focus{outline:none;border-color:#00e5b8}
 .promo-msg{font-size:.78rem;margin-top:6px;min-height:16px}
 
+/* ── Auth Modal ── */
+.auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center}
+.auth-overlay.open{display:flex}
+.auth-card{background:#1a1d21;border:1.5px solid #2e3540;border-radius:8px;width:100%;max-width:380px;padding:32px;margin:16px}
+.auth-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;text-transform:uppercase;letter-spacing:.05em;color:#00e5b8;margin-bottom:3px}
+.auth-sub{font-size:.82rem;color:#9aa3ad;margin-bottom:22px}
+.auth-tabs{display:flex;border-bottom:1.5px solid #2e3540;margin-bottom:20px}
+.auth-tab{flex:1;background:none;border:none;padding:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em;color:#5a6472;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all .15s}
+.auth-tab.active{color:#00e5b8;border-bottom-color:#00e5b8}
+.auth-field{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.auth-field label{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:#9aa3ad;font-family:'Barlow Condensed',sans-serif;font-weight:600}
+.auth-field input{background:#0f1112;border:1.5px solid #2e3540;border-radius:4px;padding:9px 12px;color:#f0f2f5;font-size:.9rem;font-family:'Barlow',sans-serif}
+.auth-field input:focus{outline:none;border-color:#00e5b8}
+.auth-error{font-size:.78rem;color:#ff6b6b;margin-bottom:10px;min-height:16px;line-height:1.4}
+.auth-footer{display:flex;gap:8px;margin-top:6px}
+.auth-footer .btn{flex:1;justify-content:center}
+.auth-user{display:flex;align-items:center;gap:8px}
+.auth-user-email{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.75rem;color:#9aa3ad;font-family:'DM Mono',monospace}
+.auth-sign-out{background:none;border:none;color:#5a6472;font-size:.72rem;cursor:pointer;padding:0;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:color .15s}
+.auth-sign-out:hover{color:#ff6b6b}
+.auth-plan-badge{font-size:.58rem;font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:.1em;text-transform:uppercase;background:#002a1e;border:1px solid #00e5b8;border-radius:3px;padding:1px 5px;color:#00e5b8}
+
 /* ── Pro Label ── */
 .pro-label{font-size:.58rem;font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:.1em;color:#f7b731;text-transform:uppercase;background:#2a2200;border:1px solid #f7b731;border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle;line-height:1}
 
@@ -293,8 +316,56 @@ body.print-summary .print-header{display:block!important}
   <button class="btn" onclick="openImport()">⬆ Import</button>
   <button class="btn" onclick="printSummary()">⎙ Summary</button>
   <button class="btn" onclick="savePDF()">⬇ Full PDF</button>
+  <button class="btn btn-sm" id="auth-signin-btn" onclick="openAuthModal('in')" style="border-color:#00e5b8;color:#00e5b8">Sign In</button>
+  <div id="auth-user-display" style="display:none" class="auth-user">
+    <span class="auth-user-email" id="auth-user-email"></span>
+    <span class="auth-plan-badge" id="auth-plan-badge">FREE</span>
+    <button class="auth-sign-out" onclick="handleSignOut()">Sign Out</button>
+  </div>
   <button class="btn btn-primary" onclick="optimize()">▶ Optimize</button>
 </header>
+
+<!-- ── AUTH MODAL ─────────────────────────────────────────────────────────── -->
+<div class="auth-overlay" id="auth-modal">
+  <div class="auth-card">
+    <div class="auth-title">CutList<span style="color:#f0f2f5">IQ</span></div>
+    <div class="auth-sub">Sign in for unlimited free access — no daily limits</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="auth-tab-in" onclick="switchAuthTab('in')">Sign In</button>
+      <button class="auth-tab" id="auth-tab-up" onclick="switchAuthTab('up')">Create Account</button>
+    </div>
+    <div id="auth-panel-in">
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="auth-email-in" placeholder="you@example.com" onkeydown="if(event.key==='Enter')handleSignIn()">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="auth-pass-in" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleSignIn()">
+      </div>
+      <div class="auth-error" id="auth-err-in"></div>
+      <div class="auth-footer">
+        <button class="btn" onclick="closeAuthModal()">Cancel</button>
+        <button class="btn btn-primary" id="auth-signin-submit" onclick="handleSignIn()">Sign In →</button>
+      </div>
+    </div>
+    <div id="auth-panel-up" style="display:none">
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="auth-email-up" placeholder="you@example.com" onkeydown="if(event.key==='Enter')handleSignUp()">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="auth-pass-up" placeholder="At least 6 characters" onkeydown="if(event.key==='Enter')handleSignUp()">
+      </div>
+      <div class="auth-error" id="auth-err-up"></div>
+      <div class="auth-footer">
+        <button class="btn" onclick="closeAuthModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="handleSignUp()">Create Account →</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <button class="mob-toggle" id="mob-toggle" onclick="toggleSidebar()" title="Toggle inputs">⊞</button>
 <div class="app-body">
@@ -612,6 +683,9 @@ function toggleSidebar(){
   else showMobileResults();
 }
 // ── STATE ─────────────────────────────────────────────────────────────────────
+let currentUser = null;
+let userPlan    = 'none'; // 'none' | 'free' | 'pro'
+let _sb         = null;
 let stocks    = [];
 let parts     = [];
 let optMethod = 'nested';
@@ -1303,13 +1377,12 @@ function loadSavedState(){
 }
 // ── INIT ──────────────────────────────────────────────────────────────────────
 const restored=loadSavedState();
-// Promo-unlocked users always get Pro mode, even across sessions
 if(localStorage.getItem('cutlistiq_promo')==='UNLOCKED') setMode('pro');
 else if(!restored) setMode('quick');
-// Always ensure minimum default rows — even a restored empty state should show inputs
 if(stocks.length===0){addStock();addStock();}
 if(parts.length===0){addPart();addPart();addPart();addPart();}
 updateUsagePill();
+initSupabase();
 
 // Auto-save whenever settings inputs change
 ['units','kerf','allow-rotate','grain-dir','show-labels','eb-enabled','eb-thickness','eb-color'].forEach(id=>{
@@ -1358,7 +1431,8 @@ function getUsageData(){
 }
 
 function incrementUsage(){
-  if(appMode==='pro') return; // pro users have no limit
+  if(appMode==='pro') return;
+  if(currentUser) return; // logged-in users have no limit
   const d=getUsageData();
   d.count++;
   localStorage.setItem('cutlistiq_usage',JSON.stringify(d));
@@ -1368,13 +1442,14 @@ function incrementUsage(){
 function canOptimize(){
   if(appMode==='pro') return true;
   if(localStorage.getItem('cutlistiq_promo')==='UNLOCKED') return true;
+  if(currentUser) return true; // any logged-in user has unlimited Quick Cut
   return getUsageData().count<FREE_LIMIT;
 }
 
 function updateUsagePill(){
   const pill=document.getElementById('usage-pill');
   if(!pill) return;
-  if(appMode==='pro'){pill.style.display='none';return;}
+  if(appMode==='pro'||currentUser){pill.style.display='none';return;}
   const left=Math.max(0,FREE_LIMIT-getUsageData().count);
   pill.style.display='';
   pill.textContent=left>0?`${left} free use${left===1?'':'s'} left today`:'Daily limit reached';
@@ -1410,10 +1485,131 @@ function applyPromoCode(){
 
 function goToPro(){
   // TODO: Replace with Stripe payment link when ready
-  // For now, unlocks pro mode locally so Heath can demo the features
   closeUpgradeModal();
+  if(!currentUser){ openAuthModal('up'); return; }
   setMode('pro');
   showSaveStatus('Shop Pro unlocked ✓');
+}
+
+// ── SUPABASE AUTH ─────────────────────────────────────────────────────────────
+const SUPABASE_URL='https://oaxkcsnmiozpnnhlmkmi.supabase.co';
+const SUPABASE_KEY='sb_publishable_j6iNpqB7GVx-os2XMWJs7A_eFUC9r_P';
+
+async function initSupabase(){
+  if(!window.supabase) return;
+  _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  const {data:{session}}=await _sb.auth.getSession();
+  if(session){currentUser=session.user;await loadUserPlan();}
+  _sb.auth.onAuthStateChange(async(event,session)=>{
+    if(session){currentUser=session.user;await loadUserPlan();}
+    else{currentUser=null;userPlan='none';}
+    updateAuthUI();
+    applyAuthMode();
+  });
+  updateAuthUI();
+  applyAuthMode();
+}
+
+async function loadUserPlan(){
+  if(!_sb||!currentUser) return;
+  const {data,error}=await _sb.from('cutlistiq_profiles').select('plan').eq('id',currentUser.id).single();
+  if(error||!data){
+    await _sb.from('cutlistiq_profiles').insert({id:currentUser.id,plan:'free'});
+    userPlan='free';
+  } else {
+    userPlan=data.plan;
+  }
+}
+
+function applyAuthMode(){
+  const promoUnlocked=localStorage.getItem('cutlistiq_promo')==='UNLOCKED';
+  if(promoUnlocked||userPlan==='pro') setMode('pro');
+  updateUsagePill();
+}
+
+function updateAuthUI(){
+  const signinBtn=document.getElementById('auth-signin-btn');
+  const userDisplay=document.getElementById('auth-user-display');
+  const emailEl=document.getElementById('auth-user-email');
+  const badgeEl=document.getElementById('auth-plan-badge');
+  if(!signinBtn||!userDisplay) return;
+  if(currentUser){
+    signinBtn.style.display='none';
+    userDisplay.style.display='flex';
+    if(emailEl) emailEl.textContent=currentUser.email;
+    if(badgeEl){
+      badgeEl.textContent=userPlan==='pro'?'PRO':'FREE';
+      badgeEl.style.background=userPlan==='pro'?'#002a1e':'#1a1d21';
+      badgeEl.style.borderColor=userPlan==='pro'?'#00e5b8':'#5a6472';
+      badgeEl.style.color=userPlan==='pro'?'#00e5b8':'#5a6472';
+    }
+  } else {
+    signinBtn.style.display='';
+    userDisplay.style.display='none';
+  }
+}
+
+function openAuthModal(tab){
+  switchAuthTab(tab||'in');
+  document.getElementById('auth-modal').classList.add('open');
+  setTimeout(()=>{
+    const f=document.getElementById(tab==='up'?'auth-email-up':'auth-email-in');
+    if(f) f.focus();
+  },100);
+}
+
+function closeAuthModal(){
+  document.getElementById('auth-modal').classList.remove('open');
+  document.getElementById('auth-err-in').textContent='';
+  document.getElementById('auth-err-up').textContent='';
+  document.getElementById('auth-err-up').style.color='#ff6b6b';
+}
+
+function switchAuthTab(tab){
+  document.getElementById('auth-panel-in').style.display=tab==='in'?'':'none';
+  document.getElementById('auth-panel-up').style.display=tab==='up'?'':'none';
+  document.getElementById('auth-tab-in').classList.toggle('active',tab==='in');
+  document.getElementById('auth-tab-up').classList.toggle('active',tab==='up');
+}
+
+async function handleSignIn(){
+  if(!_sb) return;
+  const email=document.getElementById('auth-email-in').value.trim();
+  const pass=document.getElementById('auth-pass-in').value;
+  const errEl=document.getElementById('auth-err-in');
+  const btn=document.getElementById('auth-signin-submit');
+  if(!email||!pass){errEl.textContent='Please enter your email and password.';return;}
+  errEl.textContent='Signing in…';errEl.style.color='#9aa3ad';
+  if(btn) btn.disabled=true;
+  const {error}=await _sb.auth.signInWithPassword({email,password:pass});
+  if(btn) btn.disabled=false;
+  if(error){errEl.style.color='#ff6b6b';errEl.textContent=error.message;return;}
+  closeAuthModal();
+  showSaveStatus('Signed in ✓');
+}
+
+async function handleSignUp(){
+  if(!_sb) return;
+  const email=document.getElementById('auth-email-up').value.trim();
+  const pass=document.getElementById('auth-pass-up').value;
+  const errEl=document.getElementById('auth-err-up');
+  if(!email){errEl.textContent='Please enter your email.';return;}
+  if(pass.length<6){errEl.textContent='Password must be at least 6 characters.';return;}
+  errEl.textContent='Creating account…';errEl.style.color='#9aa3ad';
+  const {data,error}=await _sb.auth.signUp({email,password:pass,options:{emailRedirectTo:'https://cutlistiq.pro'}});
+  if(error){errEl.style.color='#ff6b6b';errEl.textContent=error.message;return;}
+  errEl.style.color='#00e5b8';
+  errEl.textContent='✓ Check your email to confirm your account, then sign in.';
+}
+
+async function handleSignOut(){
+  if(!_sb) return;
+  await _sb.auth.signOut();
+  currentUser=null;userPlan='none';
+  updateAuthUI();
+  if(localStorage.getItem('cutlistiq_promo')!=='UNLOCKED') setMode('quick');
+  updateUsagePill();
+  showSaveStatus('Signed out');
 }
 
 // ── MATERIAL COSTS (Shop Pro) ─────────────────────────────────────────────────
