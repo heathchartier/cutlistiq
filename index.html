@@ -211,6 +211,12 @@ canvas.sheet-canvas{display:block;border:1px solid #3a4149;border-radius:2px;bac
 .price-yearly{font-size:.76rem;color:#00e5b8;margin-top:3px}
 .upgrade-footer{display:flex;gap:8px;padding:14px 24px 20px}
 .upgrade-footer .btn{flex:1;justify-content:center}
+.upgrade-promo{padding:0 24px 4px;text-align:center}
+.promo-divider{font-size:.72rem;color:#5a6472;margin-bottom:8px;text-transform:uppercase;letter-spacing:.1em}
+.promo-row{display:flex;gap:8px}
+.promo-field{flex:1;background:#1a1d21;border:1.5px solid #3a4149;border-radius:4px;padding:7px 10px;color:#f0f2f5;font-family:'DM Mono',monospace;font-size:.85rem;text-transform:uppercase;letter-spacing:.08em}
+.promo-field:focus{outline:none;border-color:#00e5b8}
+.promo-msg{font-size:.78rem;margin-top:6px;min-height:16px}
 
 /* ── Pro Label ── */
 .pro-label{font-size:.58rem;font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:.1em;color:#f7b731;text-transform:uppercase;background:#2a2200;border:1px solid #f7b731;border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle;line-height:1}
@@ -507,6 +513,14 @@ body.print-summary .print-header{display:block!important}
         <div class="price-amount">$19<span style="font-size:1.2rem;font-weight:400;color:#9aa3ad">/mo</span></div>
         <div class="price-yearly">or $149/year — save 35%</div>
       </div>
+    </div>
+    <div class="upgrade-promo">
+      <div class="promo-divider">or enter a promo code</div>
+      <div class="promo-row">
+        <input type="text" id="promo-input" class="promo-field" placeholder="ENTER CODE" onkeydown="if(event.key==='Enter')applyPromoCode()">
+        <button class="btn btn-sm" onclick="applyPromoCode()">Apply</button>
+      </div>
+      <div id="promo-msg" class="promo-msg"></div>
     </div>
     <div class="upgrade-footer">
       <button class="btn" onclick="closeUpgradeModal()">Maybe Later</button>
@@ -1289,7 +1303,9 @@ function loadSavedState(){
 }
 // ── INIT ──────────────────────────────────────────────────────────────────────
 const restored=loadSavedState();
-if(!restored) setMode('quick');
+// Promo-unlocked users always get Pro mode, even across sessions
+if(localStorage.getItem('cutlistiq_promo')==='UNLOCKED') setMode('pro');
+else if(!restored) setMode('quick');
 // Always ensure minimum default rows — even a restored empty state should show inputs
 if(stocks.length===0){addStock();addStock();}
 if(parts.length===0){addPart();addPart();addPart();addPart();}
@@ -1351,6 +1367,7 @@ function incrementUsage(){
 
 function canOptimize(){
   if(appMode==='pro') return true;
+  if(localStorage.getItem('cutlistiq_promo')==='UNLOCKED') return true;
   return getUsageData().count<FREE_LIMIT;
 }
 
@@ -1374,6 +1391,21 @@ function showUpgradeModal(msg){
 
 function closeUpgradeModal(){
   document.getElementById('upgrade-modal').classList.remove('open');
+}
+
+function applyPromoCode(){
+  const input=document.getElementById('promo-input');
+  const msgEl=document.getElementById('promo-msg');
+  const code=(input?input.value:'').trim().toUpperCase();
+  const VALID=['IQPRO','IQSHOP'];
+  if(VALID.includes(code)){
+    localStorage.setItem('cutlistiq_promo','UNLOCKED');
+    setMode('pro');
+    closeUpgradeModal();
+    showSaveStatus('Shop Pro unlocked ✓');
+  } else {
+    if(msgEl){msgEl.style.color='#ff6b6b';msgEl.textContent='Invalid code — try again.';}
+  }
 }
 
 function goToPro(){
