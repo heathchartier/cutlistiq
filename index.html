@@ -69,6 +69,19 @@ header{background:#1a1d21;border-bottom:2px solid #00e5b8;padding:0 20px;display
 
 .section{border-bottom:1px solid #3a4149;padding:14px}
 .section-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#00e5b8;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+/* ── Saved Projects ── */
+.proj-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.proj-item{display:flex;align-items:center;gap:6px;background:#23282e;border:1px solid #2e3540;border-radius:4px;padding:7px 10px;cursor:pointer;transition:border-color .15s}
+.proj-item:hover{border-color:#00e5b8}
+.proj-item-name{flex:1;font-size:.82rem;color:#f0f2f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proj-item-date{font-size:.68rem;color:#5a6472;font-family:'DM Mono',monospace;white-space:nowrap}
+.proj-item-del{background:none;border:none;color:#5a6472;cursor:pointer;font-size:.85rem;padding:0 2px;line-height:1;transition:color .15s;flex-shrink:0}
+.proj-item-del:hover{color:#ff6b6b}
+.proj-empty{font-size:.78rem;color:#5a6472;text-align:center;padding:10px 0}
+.proj-save-row{display:flex;gap:6px}
+.proj-save-input{flex:1;background:#0f1112;border:1.5px solid #2e3540;border-radius:4px;padding:6px 10px;color:#f0f2f5;font-size:.82rem;font-family:'Barlow',sans-serif}
+.proj-save-input:focus{outline:none;border-color:#00e5b8}
+.proj-limit{font-size:.72rem;color:#9aa3ad;margin-top:6px;text-align:center}
 
 label{font-size:.8rem;color:#9aa3ad;display:block;margin-bottom:3px}
 input[type=text],input[type=number],select{width:100%;background:#23282e;border:1.5px solid #3a4149;color:#f0f2f5;border-radius:4px;padding:6px 8px;font-family:'DM Mono',monospace;font-size:.84rem;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
@@ -488,6 +501,17 @@ body.print-summary .print-header{display:block!important}
       Linear footage totals appear in the <strong style="color:#f0f2f5">Edge Banding</strong> tab.
     </div>
   </div>
+</div>
+
+<!-- SAVED PROJECTS (Shop Pro) -->
+<div class="section" id="pro-saved-projects" style="display:none">
+  <div class="section-title">Saved Projects <span class="pro-label">PRO</span></div>
+  <div class="proj-list" id="proj-list"></div>
+  <div class="proj-save-row">
+    <input type="text" class="proj-save-input" id="proj-save-name" placeholder="Project name…" onkeydown="if(event.key==='Enter')saveProject()">
+    <button class="btn btn-sm btn-primary" onclick="saveProject()">Save</button>
+  </div>
+  <div class="proj-limit" id="proj-limit-msg"></div>
 </div>
 
 <!-- PROJECT INFO (Shop Pro) -->
@@ -1405,10 +1429,11 @@ function setMode(mode){
   document.getElementById('mode-quick').classList.toggle('active',mode==='quick');
   document.getElementById('mode-pro').classList.toggle('active',mode==='pro');
   // Show/hide pro-only sidebar sections
-  ['pro-project','pro-costs'].forEach(id=>{
+  ['pro-saved-projects','pro-project','pro-costs'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.style.display=mode==='pro'?'':'none';
   });
+  if(mode==='pro') renderProjectsList();
   // Show/hide AI tab (only after results exist)
   const aiTab=document.getElementById('tab-btn-ai');
   if(aiTab) aiTab.style.display=(mode==='pro'&&results)?'':'none';
@@ -1491,6 +1516,96 @@ function goToPro(){
   if(!currentUser){ openAuthModal('up'); return; }
   setMode('pro');
   showSaveStatus('Shop Pro unlocked ✓');
+}
+
+// ── SAVED PROJECTS ────────────────────────────────────────────────────────────
+const MAX_PROJECTS_FREE = 3;
+
+function getSavedProjects(){
+  try{ return JSON.parse(localStorage.getItem('cutlistiq_projects')||'[]'); }
+  catch{ return []; }
+}
+
+function renderProjectsList(){
+  const list=document.getElementById('proj-list');
+  const limitMsg=document.getElementById('proj-limit-msg');
+  if(!list) return;
+  const projects=getSavedProjects();
+  const isPro=userPlan==='pro'||localStorage.getItem('cutlistiq_promo')==='UNLOCKED';
+  if(!projects.length){
+    list.innerHTML='<div class="proj-empty">No saved projects yet</div>';
+  } else {
+    list.innerHTML=projects.map((p,i)=>`
+      <div class="proj-item" onclick="loadProject(${i})">
+        <span class="proj-item-name">${p.name||'Untitled'}</span>
+        <span class="proj-item-date">${p.date||''}</span>
+        <button class="proj-item-del" onclick="event.stopPropagation();deleteProject(${i})" title="Delete">✕</button>
+      </div>`).join('');
+  }
+  if(limitMsg){
+    if(!isPro) limitMsg.textContent=`${projects.length}/${MAX_PROJECTS_FREE} projects (upgrade for unlimited)`;
+    else limitMsg.textContent=`${projects.length} saved project${projects.length===1?'':'s'}`;
+  }
+}
+
+function saveProject(){
+  const nameInput=document.getElementById('proj-save-name');
+  const projNameField=document.getElementById('proj-name');
+  const name=(nameInput?.value||projNameField?.value||'').trim()||'Untitled Job';
+  const isPro=userPlan==='pro'||localStorage.getItem('cutlistiq_promo')==='UNLOCKED';
+  const projects=getSavedProjects();
+  if(!isPro&&projects.length>=MAX_PROJECTS_FREE){
+    showSaveStatus('Limit reached — upgrade to Shop Pro for unlimited saves');
+    return;
+  }
+  const snapshot={
+    name,
+    date:new Date().toLocaleDateString(),
+    stocks:JSON.parse(JSON.stringify(stocks)),
+    parts:JSON.parse(JSON.stringify(parts)),
+    optMethod,
+    projName:projNameField?.value||name,
+    projClient:document.getElementById('proj-client')?.value||'',
+    projDate:document.getElementById('proj-date')?.value||'',
+    projQuote:document.getElementById('proj-quote')?.value||''
+  };
+  // Check if name already exists — overwrite
+  const existing=projects.findIndex(p=>p.name===name);
+  if(existing>=0) projects[existing]=snapshot;
+  else projects.unshift(snapshot);
+  localStorage.setItem('cutlistiq_projects',JSON.stringify(projects));
+  if(nameInput) nameInput.value='';
+  renderProjectsList();
+  showSaveStatus(`"${name}" saved ✓`);
+}
+
+function loadProject(index){
+  const projects=getSavedProjects();
+  const p=projects[index];
+  if(!p) return;
+  if(!confirm(`Load "${p.name}"? Your current job will be replaced.`)) return;
+  stocks=p.stocks||[];
+  parts=p.parts||[];
+  optMethod=p.optMethod||'nested';
+  renderStocks();renderParts();
+  if(p.projName&&document.getElementById('proj-name')) document.getElementById('proj-name').value=p.projName;
+  if(p.projClient&&document.getElementById('proj-client')) document.getElementById('proj-client').value=p.projClient;
+  if(p.projDate&&document.getElementById('proj-date')) document.getElementById('proj-date').value=p.projDate;
+  if(p.projQuote&&document.getElementById('proj-quote')) document.getElementById('proj-quote').value=p.projQuote;
+  // Restore algorithm UI
+  document.querySelectorAll('.method-btn').forEach(b=>b.classList.toggle('active',b.dataset.method===optMethod));
+  schedSave();
+  showSaveStatus(`"${p.name}" loaded ✓`);
+}
+
+function deleteProject(index){
+  const projects=getSavedProjects();
+  const name=projects[index]?.name||'this project';
+  if(!confirm(`Delete "${name}"?`)) return;
+  projects.splice(index,1);
+  localStorage.setItem('cutlistiq_projects',JSON.stringify(projects));
+  renderProjectsList();
+  showSaveStatus(`"${name}" deleted`);
 }
 
 // ── SUPABASE AUTH ─────────────────────────────────────────────────────────────
