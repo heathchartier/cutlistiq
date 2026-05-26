@@ -1507,14 +1507,24 @@ function applyPromoCode(){
   const msgEl=document.getElementById('promo-msg');
   const code=(input?input.value:'').trim().toUpperCase();
   const VALID=['IQPRO','IQSHOP'];
-  if(VALID.includes(code)){
-    localStorage.setItem('cutlistiq_promo','UNLOCKED');
-    setMode('pro');
-    closeUpgradeModal();
-    showSaveStatus('Shop Pro unlocked ✓');
-  } else {
+  if(!VALID.includes(code)){
     if(msgEl){msgEl.style.color='#ff6b6b';msgEl.textContent='Invalid code — try again.';}
+    return;
   }
+  // Valid code — require account first
+  if(!currentUser){
+    if(msgEl){msgEl.style.color='#00e5b8';msgEl.textContent='✓ Valid code! Create a free account to redeem it.';}
+    setTimeout(()=>{ closeUpgradeModal(); openAuthModal('up'); },1200);
+    // Store pending code so it auto-applies after sign-in
+    localStorage.setItem('cutlistiq_pending_promo',code);
+    return;
+  }
+  // Signed in — apply immediately
+  localStorage.setItem('cutlistiq_promo','UNLOCKED');
+  localStorage.removeItem('cutlistiq_pending_promo');
+  setMode('pro');
+  closeUpgradeModal();
+  showSaveStatus('Shop Pro unlocked ✓');
 }
 
 function goToPro(){
@@ -1707,6 +1717,7 @@ async function handleSignIn(){
   if(btn) btn.disabled=false;
   if(error){errEl.style.color='#ff6b6b';errEl.textContent=error.message;return;}
   closeAuthModal();
+  checkPendingPromo();
   showSaveStatus('Signed in ✓');
 }
 
@@ -1721,7 +1732,16 @@ async function handleSignUp(){
   const {data,error}=await _sb.auth.signUp({email,password:pass,options:{emailRedirectTo:'https://cutlistiq.pro'}});
   if(error){errEl.style.color='#ff6b6b';errEl.textContent=error.message;return;}
   errEl.style.color='#00e5b8';
-  errEl.textContent='✓ Check your email to confirm your account, then sign in.';
+  errEl.textContent='✓ Check your email to confirm, then sign in to redeem your code.';
+}
+
+function checkPendingPromo(){
+  const pending=localStorage.getItem('cutlistiq_pending_promo');
+  if(!pending||!currentUser) return;
+  localStorage.setItem('cutlistiq_promo','UNLOCKED');
+  localStorage.removeItem('cutlistiq_pending_promo');
+  setMode('pro');
+  showSaveStatus('Shop Pro unlocked ✓');
 }
 
 async function handleSignOut(){
