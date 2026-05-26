@@ -1403,8 +1403,8 @@ function loadSavedState(){
 }
 // ── INIT ──────────────────────────────────────────────────────────────────────
 const restored=loadSavedState();
-if(localStorage.getItem('cutlistiq_promo')==='UNLOCKED') setMode('pro');
-else if(!restored) setMode('quick');
+// Don't apply promo on init — wait for Supabase to confirm sign-in first
+if(!restored) setMode('quick');
 if(stocks.length===0){addStock();addStock();}
 if(parts.length===0){addPart();addPart();addPart();addPart();}
 updateUsagePill();
@@ -1425,9 +1425,9 @@ initSupabase();
 // ── MODE MANAGEMENT ───────────────────────────────────────────────────────────
 function handleProClick(){
   const promoUnlocked=localStorage.getItem('cutlistiq_promo')==='UNLOCKED';
-  const isPro=userPlan==='pro'||promoUnlocked;
-  if(isPro) setMode('pro'); // already unlocked — just switch
-  else showUpgradeModal(); // show modal with promo code input
+  const isPro=userPlan==='pro'||(promoUnlocked&&currentUser);
+  if(isPro) setMode('pro');
+  else showUpgradeModal();
 }
 
 function setMode(mode){
@@ -1475,8 +1475,8 @@ function incrementUsage(){
 
 function canOptimize(){
   if(appMode==='pro') return true;
-  if(localStorage.getItem('cutlistiq_promo')==='UNLOCKED') return true;
-  if(currentUser) return true; // any logged-in user has unlimited Quick Cut
+  if(localStorage.getItem('cutlistiq_promo')==='UNLOCKED'&&currentUser) return true;
+  if(currentUser) return true;
   return getUsageData().count<FREE_LIMIT;
 }
 
@@ -1655,7 +1655,13 @@ async function loadUserPlan(){
 
 function applyAuthMode(){
   const promoUnlocked=localStorage.getItem('cutlistiq_promo')==='UNLOCKED';
-  if(promoUnlocked||userPlan==='pro') setMode('pro');
+  if(userPlan==='pro'||(promoUnlocked&&currentUser)){
+    setMode('pro');
+  } else {
+    // If promo was set without an account, clear it — account required
+    if(promoUnlocked&&!currentUser) localStorage.removeItem('cutlistiq_promo');
+    setMode('quick');
+  }
   updateUsagePill();
 }
 
