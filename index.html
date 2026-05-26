@@ -716,7 +716,7 @@ let stocks    = [];
 let parts     = [];
 let optMethod = 'nested';
 let results   = null;
-let appMode   = localStorage.getItem('cutlistiq_mode')||'quick';
+let appMode   = 'quick'; // always start quick — applyAuthMode() sets pro after auth check
 let stockCosts= [];
 let saveTimer = null;
 let importPending = [];
@@ -1341,7 +1341,7 @@ function schedSave(){
     try{
       const state={
         version:SAVE_VERSION,
-        stocks,parts,optMethod,stockCosts,appMode,
+        stocks,parts,optMethod,stockCosts,
         units:document.getElementById('units').value,
         kerf:document.getElementById('kerf').value,
         allowRotate:document.getElementById('allow-rotate').checked,
@@ -1376,7 +1376,7 @@ function loadSavedState(){
     stocks=s.stocks||[];parts=s.parts||[];
     stockCosts=s.stockCosts||[];
     optMethod=s.optMethod||'nested';
-    if(s.appMode) appMode=s.appMode;
+    // appMode is NOT restored from saved state — applyAuthMode() controls it after auth loads
     selectOpt(optMethod);
     // Restore settings after DOM ready
     setTimeout(()=>{
@@ -1394,7 +1394,7 @@ function loadSavedState(){
       if(s.projClient&&document.getElementById('proj-client')) document.getElementById('proj-client').value=s.projClient;
       if(s.projDate&&document.getElementById('proj-date')) document.getElementById('proj-date').value=s.projDate;
       if(s.projQuote&&document.getElementById('proj-quote')) document.getElementById('proj-quote').value=s.projQuote;
-      setMode(appMode);
+      setMode('quick'); // always quick — applyAuthMode() upgrades to pro if user is authed
     },0);
     renderStocks();renderParts();
     showSaveStatus('Job restored ✓');
@@ -1548,7 +1548,7 @@ function renderProjectsList(){
   const limitMsg=document.getElementById('proj-limit-msg');
   if(!list) return;
   const projects=getSavedProjects();
-  const isPro=userPlan==='pro'||localStorage.getItem('cutlistiq_promo')==='UNLOCKED';
+  const isPro=userPlan==='pro'||(localStorage.getItem('cutlistiq_promo')==='UNLOCKED'&&currentUser);
   if(!projects.length){
     list.innerHTML='<div class="proj-empty">No saved projects yet</div>';
   } else {
@@ -1569,7 +1569,7 @@ function saveProject(){
   const nameInput=document.getElementById('proj-save-name');
   const projNameField=document.getElementById('proj-name');
   const name=(nameInput?.value||projNameField?.value||'').trim()||'Untitled Job';
-  const isPro=userPlan==='pro'||localStorage.getItem('cutlistiq_promo')==='UNLOCKED';
+  const isPro=userPlan==='pro'||(localStorage.getItem('cutlistiq_promo')==='UNLOCKED'&&currentUser);
   const projects=getSavedProjects();
   if(!isPro&&projects.length>=MAX_PROJECTS_FREE){
     showSaveStatus('Limit reached — upgrade to Shop Pro for unlimited saves');
@@ -1754,8 +1754,9 @@ async function handleSignOut(){
   if(!_sb) return;
   await _sb.auth.signOut();
   currentUser=null;userPlan='none';
+  localStorage.removeItem('cutlistiq_promo'); // promo requires being signed in
   updateAuthUI();
-  if(localStorage.getItem('cutlistiq_promo')!=='UNLOCKED') setMode('quick');
+  setMode('quick');
   updateUsagePill();
   showSaveStatus('Signed out');
 }
