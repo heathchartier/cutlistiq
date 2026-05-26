@@ -684,8 +684,10 @@ function toggleSidebar(){
 }
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let currentUser = null;
-let userPlan    = 'none'; // 'none' | 'free' | 'pro'
+let userPlan    = 'none'; // 'none' | 'free' | 'quickcut' | 'pro'
 let _sb         = null;
+const SUPABASE_URL='https://oaxkcsnmiozpnnhlmkmi.supabase.co';
+const SUPABASE_KEY='sb_publishable_j6iNpqB7GVx-os2XMWJs7A_eFUC9r_P';
 let stocks    = [];
 let parts     = [];
 let optMethod = 'nested';
@@ -1492,8 +1494,6 @@ function goToPro(){
 }
 
 // ── SUPABASE AUTH ─────────────────────────────────────────────────────────────
-const SUPABASE_URL='https://oaxkcsnmiozpnnhlmkmi.supabase.co';
-const SUPABASE_KEY='sb_publishable_j6iNpqB7GVx-os2XMWJs7A_eFUC9r_P';
 
 async function initSupabase(){
   if(!window.supabase) return;
