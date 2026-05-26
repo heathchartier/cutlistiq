@@ -321,7 +321,7 @@ body.print-summary .print-header{display:block!important}
   <div class="logo">CutList<span>IQ</span></div>
   <div class="mode-toggle">
     <button class="mode-btn active" id="mode-quick" onclick="setMode('quick')">Quick Cut</button>
-    <button class="mode-btn" id="mode-pro" onclick="setMode('pro')">Shop Pro <span class="pro-badge">PRO</span></button>
+    <button class="mode-btn" id="mode-pro" onclick="handleProClick()">Shop Pro <span class="pro-badge">PRO</span></button>
   </div>
   <div class="header-sep"></div>
   <span id="usage-pill" class="usage-pill" style="display:none"></span>
@@ -1423,6 +1423,13 @@ initSupabase();
 });
 
 // ── MODE MANAGEMENT ───────────────────────────────────────────────────────────
+function handleProClick(){
+  const promoUnlocked=localStorage.getItem('cutlistiq_promo')==='UNLOCKED';
+  const isPro=userPlan==='pro'||promoUnlocked;
+  if(isPro) setMode('pro'); // already unlocked — just switch
+  else showUpgradeModal(); // show modal with promo code input
+}
+
 function setMode(mode){
   appMode=mode;
   localStorage.setItem('cutlistiq_mode',mode);
