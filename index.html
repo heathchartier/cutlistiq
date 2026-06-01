@@ -30,9 +30,13 @@ header{background:#1a1d21;border-bottom:2px solid #00e5b8;padding:0 20px;display
 .btn-primary:hover{background:#33eecc;border-color:#33eecc;color:#0f1112}
 .btn-sm{padding:3px 8px;font-size:.76rem}
 
-.app-body{display:grid;grid-template-columns:430px 1fr;flex:1;min-height:0;overflow:hidden}
-.sidebar{background:#1a1d21;border-right:1px solid #3a4149;display:flex;flex-direction:column;overflow-y:auto}
-.main{display:flex;flex-direction:column;overflow-y:auto;padding:18px;gap:14px;background:#0f1112}
+.app-body{display:flex;flex:1;min-height:0;overflow:hidden}
+.sidebar{width:430px;min-width:180px;max-width:75vw;background:#1a1d21;border-right:none;display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto;padding:18px;gap:14px;background:#0f1112}
+/* ── Panel split handle ── */
+.split-handle{width:5px;background:#2e3540;cursor:col-resize;flex-shrink:0;position:relative;transition:background .12s;z-index:10;user-select:none}
+.split-handle:hover,.split-handle.dragging{background:#00e5b8}
+.split-handle::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:3px;height:48px;border-radius:3px;background:rgba(255,255,255,.12)}
 
 /* ── Mobile toggle button (hidden on desktop) ── */
 .mob-toggle{display:none;position:fixed;bottom:20px;right:20px;z-index:200;background:#00e5b8;color:#0f1112;border:none;border-radius:50%;width:52px;height:52px;font-size:1.4rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,229,184,.4);align-items:center;justify-content:center;font-weight:700;transition:transform .15s}
@@ -40,6 +44,7 @@ header{background:#1a1d21;border-bottom:2px solid #00e5b8;padding:0 20px;display
 
 @media(max-width:700px){
   /* Sidebar and main are full-screen panels — only one visible at a time */
+  .split-handle{display:none!important}
   .app-body{display:block;position:relative;height:calc(100vh - 50px);overflow:hidden}
   .sidebar{
     position:absolute;inset:0;
@@ -556,6 +561,7 @@ body.print-summary .print-header{display:block!important}
 
   </aside>
 
+  <div class="split-handle" id="split-handle" title="Drag to resize panels"></div>
   <main class="main">
 
 <div class="print-header" id="print-header">CutListIQ — Cut List Report</div>
@@ -1475,6 +1481,7 @@ if(!restored) setMode('quick');
 if(stocks.length===0){addStock();addStock();}
 if(parts.length===0){addPart();addPart();addPart();addPart();}
 updateUsagePill();
+initSplitResize();
 initColResize();
 initSupabase();
 
@@ -2121,6 +2128,43 @@ function addCabinetToList(){
     const mp=document.getElementById('main-panel')||document.querySelector('.main');
     if(mp) mp.classList.add('mob-hidden');
   }
+}
+
+// ── PANEL SPLIT RESIZE ────────────────────────────────────────────────────────
+function initSplitResize(){
+  const handle=document.getElementById('split-handle');
+  const sidebar=document.getElementById('sidebar');
+  if(!handle||!sidebar) return;
+  const SPLIT_KEY='cutlistiq_splitw';
+
+  // Restore saved sidebar width
+  const saved=+localStorage.getItem(SPLIT_KEY);
+  if(saved>=180) sidebar.style.width=saved+'px';
+
+  let startX,startW;
+  handle.addEventListener('mousedown',e=>{
+    e.preventDefault();
+    startX=e.clientX;
+    startW=sidebar.getBoundingClientRect().width;
+    handle.classList.add('dragging');
+    document.body.style.cursor='col-resize';
+    document.body.style.userSelect='none';
+
+    const onMove=e=>{
+      const newW=Math.max(180,Math.min(window.innerWidth*0.75,startW+(e.clientX-startX)));
+      sidebar.style.width=newW+'px';
+    };
+    const onUp=()=>{
+      handle.classList.remove('dragging');
+      document.body.style.cursor='';
+      document.body.style.userSelect='';
+      localStorage.setItem(SPLIT_KEY,Math.round(sidebar.getBoundingClientRect().width));
+      document.removeEventListener('mousemove',onMove);
+      document.removeEventListener('mouseup',onUp);
+    };
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onUp);
+  });
 }
 
 // ── COLUMN RESIZE ─────────────────────────────────────────────────────────────
