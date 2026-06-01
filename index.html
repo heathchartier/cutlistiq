@@ -93,12 +93,15 @@ select option{background:#23282e;color:#f0f2f5}
 .row{display:flex;gap:8px}
 .row>*{flex:1;min-width:0}
 
-.data-table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:.75rem}
-.data-table th{background:#0f1112;color:#9aa3ad;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;padding:5px 4px;text-align:left;border-bottom:1px solid #3a4149;white-space:nowrap}
-.data-table td{padding:3px 3px;border-bottom:1px solid #3a4149;vertical-align:middle}
+.data-table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:.75rem;table-layout:fixed}
+.data-table th{background:#0f1112;color:#9aa3ad;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;padding:5px 4px;text-align:left;border-bottom:1px solid #3a4149;white-space:nowrap;position:relative;overflow:hidden}
+.data-table td{padding:3px 3px;border-bottom:1px solid #3a4149;vertical-align:middle;overflow:hidden}
 .data-table tr:hover td{background:#23282e}
-.data-table input[type=text],.data-table input[type=number]{padding:3px 5px;font-size:.75rem;background:transparent;border:1.5px solid transparent;color:#f0f2f5;width:100%;min-width:0}
+.data-table input[type=text],.data-table input[type=number]{padding:3px 5px;font-size:.75rem;background:transparent;border:1.5px solid transparent;color:#f0f2f5;width:100%;min-width:0;box-sizing:border-box}
 .data-table input:focus{background:#0f1112;border-color:#00e5b8;border-radius:3px}
+/* Column resize handle */
+.col-resize-handle{position:absolute;right:0;top:0;bottom:0;width:6px;cursor:col-resize;z-index:2;background:transparent;transition:background .12s}
+.col-resize-handle:hover,.col-resize-handle.dragging{background:rgba(0,229,184,.35)}
 
 .color-swatch{width:16px;height:16px;border-radius:3px;border:1px solid #3a4149;cursor:pointer;display:block}
 .del-btn{background:none;border:none;cursor:pointer;color:#9aa3ad;font-size:.9rem;padding:2px 3px;border-radius:3px;transition:color .15s;line-height:1}
@@ -405,16 +408,18 @@ body.print-summary .print-header{display:block!important}
     Stock Sheets
     <button class="btn btn-sm" onclick="addStock()">+ Add</button>
   </div>
-  <table class="data-table">
+  <div style="overflow-x:auto">
+  <table class="data-table" id="stock-table">
     <thead><tr>
-      <th style="width:76px">Width</th>
-      <th style="width:76px">Length</th>
-      <th style="width:58px">Qty</th>
-      <th>Material</th>
+      <th id="sth-w" style="width:76px">Width<div class="col-resize-handle" data-col="s-w"></div></th>
+      <th id="sth-h" style="width:76px">Length<div class="col-resize-handle" data-col="s-h"></div></th>
+      <th id="sth-qty" style="width:52px">Qty<div class="col-resize-handle" data-col="s-qty"></div></th>
+      <th id="sth-mat">Material<div class="col-resize-handle" data-col="s-mat"></div></th>
       <th style="width:22px"></th>
     </tr></thead>
     <tbody id="stock-body"></tbody>
   </table>
+  </div>
 </div>
 
 <!-- PARTS -->
@@ -423,17 +428,17 @@ body.print-summary .print-header{display:block!important}
     Parts / Cuts
     <button class="btn btn-sm" onclick="addPart()">+ Add</button>
   </div>
-  <div style="overflow-x:auto;margin:0 -2px">
-  <table class="data-table" style="min-width:320px">
+  <div style="overflow-x:auto;margin:0 -2px" id="parts-table-wrap">
+  <table class="data-table" id="parts-table">
     <thead><tr>
-      <th style="width:18px"></th>
-      <th style="min-width:72px">Label</th>
-      <th style="width:64px">Width</th>
-      <th style="width:64px">Length</th>
-      <th style="width:48px">Qty</th>
-      <th style="width:22px" title="Allow Rotation">⊞</th>
-      <th id="eb-col-header" style="width:90px;display:none">T&nbsp;B&nbsp;L&nbsp;R</th>
       <th style="width:20px"></th>
+      <th id="th-label" style="width:105px">Label<div class="col-resize-handle" data-col="label"></div></th>
+      <th id="th-w" style="width:65px">Width<div class="col-resize-handle" data-col="w"></div></th>
+      <th id="th-h" style="width:65px">Length<div class="col-resize-handle" data-col="h"></div></th>
+      <th id="th-qty" style="width:46px">Qty<div class="col-resize-handle" data-col="qty"></div></th>
+      <th style="width:24px" title="Allow Rotation">⊞</th>
+      <th id="eb-col-header" style="width:90px;display:none">T&nbsp;B&nbsp;L&nbsp;R</th>
+      <th style="width:22px"></th>
     </tr></thead>
     <tbody id="parts-body"></tbody>
   </table>
@@ -1475,6 +1480,7 @@ if(!restored) setMode('quick');
 if(stocks.length===0){addStock();addStock();}
 if(parts.length===0){addPart();addPart();addPart();addPart();}
 updateUsagePill();
+initColResize();
 initSupabase();
 
 // Auto-save whenever settings inputs change
@@ -2120,6 +2126,54 @@ function addCabinetToList(){
     const mp=document.getElementById('main-panel')||document.querySelector('.main');
     if(mp) mp.classList.add('mob-hidden');
   }
+}
+
+// ── COLUMN RESIZE ─────────────────────────────────────────────────────────────
+function initColResize(){
+  const COL_KEY='cutlistiq_colwidths';
+  // Restore saved widths
+  try{
+    const saved=JSON.parse(localStorage.getItem(COL_KEY)||'{}');
+    Object.entries(saved).forEach(([col,w])=>{
+      // parts table cols: th-label, th-w, th-h, th-qty
+      // stock table cols: sth-w, sth-h, sth-qty, sth-mat
+      const th=document.getElementById('th-'+col)||document.getElementById('sth-'+col.replace('s-',''));
+      if(th) th.style.width=w+'px';
+    });
+  }catch{}
+
+  document.querySelectorAll('.col-resize-handle').forEach(handle=>{
+    let startX,startW,th;
+    handle.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      th=handle.parentElement;
+      startX=e.clientX;
+      startW=th.getBoundingClientRect().width;
+      handle.classList.add('dragging');
+      document.body.style.cursor='col-resize';
+      document.body.style.userSelect='none';
+
+      const onMove=e=>{
+        const newW=Math.max(32,startW+(e.clientX-startX));
+        th.style.width=newW+'px';
+      };
+      const onUp=()=>{
+        handle.classList.remove('dragging');
+        document.body.style.cursor='';
+        document.body.style.userSelect='';
+        // Persist widths
+        try{
+          const saved=JSON.parse(localStorage.getItem(COL_KEY)||'{}');
+          saved[handle.dataset.col]=Math.round(th.getBoundingClientRect().width);
+          localStorage.setItem(COL_KEY,JSON.stringify(saved));
+        }catch{}
+        document.removeEventListener('mousemove',onMove);
+        document.removeEventListener('mouseup',onUp);
+      };
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+    });
+  });
 }
 
 // ── DRAG AND DROP ─────────────────────────────────────────────────────────────
