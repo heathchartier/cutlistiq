@@ -626,9 +626,9 @@ body.print-summary .print-header{display:block!important}
 
       <div class="cab-section-label">Dimensions</div>
       <div class="cab-dims-grid">
-        <div class="field"><label>Width (in)</label><input type="number" id="cab-w" value="18" min="6" max="120" step="0.5" oninput="updateCabPreview()"></div>
-        <div class="field"><label>Height (in)</label><input type="number" id="cab-h" value="34.5" min="6" max="120" step="0.5" oninput="updateCabPreview()"></div>
-        <div class="field"><label>Depth (in)</label><input type="number" id="cab-d" value="24" min="6" max="48" step="0.5" oninput="updateCabPreview()"></div>
+        <div class="field"><label>Width (in)</label><input type="number" id="cab-w" placeholder="18" min="6" max="120" step="0.5" oninput="updateCabPreview()"></div>
+        <div class="field"><label>Height (in)</label><input type="number" id="cab-h" placeholder="34.5" min="6" max="120" step="0.5" oninput="updateCabPreview()"></div>
+        <div class="field"><label>Depth (in)</label><input type="number" id="cab-d" placeholder="24" min="6" max="48" step="0.5" oninput="updateCabPreview()"></div>
       </div>
 
       <div class="cab-section-label">Construction Style</div>
@@ -647,9 +647,9 @@ body.print-summary .print-header{display:block!important}
 
       <div class="cab-section-label">Options</div>
       <div class="cab-opts-grid">
-        <div class="field"><label>Mat. Thickness (in)</label><input type="number" id="cab-mat" value="0.75" min="0.25" max="1.5" step="0.125" oninput="updateCabPreview()"></div>
-        <div class="field"><label>Adj. Shelves</label><input type="number" id="cab-shelves" value="1" min="0" max="8" step="1" oninput="updateCabPreview()"></div>
-        <div class="field"><label>Qty (cabinets)</label><input type="number" id="cab-qty" value="1" min="1" max="99" step="1" oninput="updateCabPreview()"></div>
+        <div class="field"><label>Mat. Thickness (in)</label><input type="number" id="cab-mat" placeholder="0.75" min="0.25" max="1.5" step="0.125" oninput="updateCabPreview()"></div>
+        <div class="field"><label>Adj. Shelves</label><input type="number" id="cab-shelves" placeholder="1" min="0" max="8" step="1" oninput="updateCabPreview()"></div>
+        <div class="field"><label>Qty (cabinets)</label><input type="number" id="cab-qty" placeholder="1" min="1" max="99" step="1" oninput="updateCabPreview()"></div>
       </div>
 
       <div class="cab-section-label">Doors</div>
@@ -661,7 +661,7 @@ body.print-summary .print-header{display:block!important}
             <option value="2">2 doors</option>
           </select>
         </div>
-        <div class="field"><label>Overlay (in)</label><input type="number" id="cab-overlay" value="0.5" min="0" max="1.5" step="0.0625" oninput="updateCabPreview()"></div>
+        <div class="field"><label>Overlay (in)</label><input type="number" id="cab-overlay" placeholder="0.5" min="0" max="1.5" step="0.0625" oninput="updateCabPreview()"></div>
         <div class="field"><label>Door Material</label><input type="text" id="cab-door-mat" placeholder="Same as box" oninput="updateCabPreview()"></div>
       </div>
 
@@ -675,8 +675,8 @@ body.print-summary .print-header{display:block!important}
               <option value="piece" selected>Add to cut list</option>
             </select>
           </div>
-          <div class="field"><label>Height (in)</label><input type="number" id="cab-tk-h" value="3.5" min="2" max="8" step="0.25" oninput="updateCabPreview()"></div>
-          <div class="field"><label>Setback (in)</label><input type="number" id="cab-tk-d" value="3" min="1" max="6" step="0.25" oninput="updateCabPreview()"></div>
+          <div class="field"><label>Height (in)</label><input type="number" id="cab-tk-h" placeholder="3.5" min="2" max="8" step="0.25" oninput="updateCabPreview()"></div>
+          <div class="field"><label>Setback (in)</label><input type="number" id="cab-tk-d" placeholder="3" min="1" max="6" step="0.25" oninput="updateCabPreview()"></div>
         </div>
       </div>
 
@@ -684,8 +684,8 @@ body.print-summary .print-header{display:block!important}
       <div id="cab-drawer-section" style="display:none">
         <div class="cab-section-label">Drawer Boxes</div>
         <div class="cab-opts-grid">
-          <div class="field"><label># Drawers</label><input type="number" id="cab-drawers" value="3" min="1" max="6" step="1" oninput="updateCabPreview()"></div>
-          <div class="field"><label>Slide Clearance (in)</label><input type="number" id="cab-slide-clr" value="1" min="0.5" max="3" step="0.25" oninput="updateCabPreview()"></div>
+          <div class="field"><label># Drawers</label><input type="number" id="cab-drawers" placeholder="3" min="1" max="6" step="1" oninput="updateCabPreview()"></div>
+          <div class="field"><label>Slide Clearance (in)</label><input type="number" id="cab-slide-clr" placeholder="1" min="0.5" max="3" step="0.25" oninput="updateCabPreview()"></div>
           <div class="field"><label>Drawer Box Material</label><input type="text" id="cab-drw-mat" placeholder="Same as box" oninput="updateCabPreview()"></div>
         </div>
       </div>
@@ -694,9 +694,9 @@ body.print-summary .print-header{display:block!important}
       <div id="cab-ff-section" style="display:none">
         <div class="cab-section-label">Face Frame Details</div>
         <div class="cab-opts-grid">
-          <div class="field"><label>Stile Width (in)</label><input type="number" id="cab-ff-stile" value="1.5" min="1" max="3" step="0.125" oninput="updateCabPreview()"></div>
-          <div class="field"><label>Top Rail (in)</label><input type="number" id="cab-ff-top" value="2" min="1" max="5" step="0.25" oninput="updateCabPreview()"></div>
-          <div class="field"><label>Bottom Rail (in)</label><input type="number" id="cab-ff-bot" value="2.5" min="1" max="5" step="0.25" oninput="updateCabPreview()"></div>
+          <div class="field"><label>Stile Width (in)</label><input type="number" id="cab-ff-stile" placeholder="1.5" min="1" max="3" step="0.125" oninput="updateCabPreview()"></div>
+          <div class="field"><label>Top Rail (in)</label><input type="number" id="cab-ff-top" placeholder="2" min="1" max="5" step="0.25" oninput="updateCabPreview()"></div>
+          <div class="field"><label>Bottom Rail (in)</label><input type="number" id="cab-ff-bot" placeholder="2.5" min="1" max="5" step="0.25" oninput="updateCabPreview()"></div>
         </div>
         <div class="field" style="margin-bottom:14px">
           <label>Face Frame Material <span style="color:#5a6472;font-weight:400">(e.g. Poplar, Oak — generates as separate parts)</span></label>
@@ -743,7 +743,7 @@ body.print-summary .print-header{display:block!important}
       <button class="btn btn-sm" onclick="addLumberRow()">+ Add Part</button>
 
       <div class="cab-opts-grid" style="margin-top:14px">
-        <div class="field"><label>Waste Factor %</label><input type="number" id="lumber-waste" value="20" min="0" max="60" step="5" oninput="updateLumberTotals()"></div>
+        <div class="field"><label>Waste Factor %</label><input type="number" id="lumber-waste" placeholder="20" min="0" max="60" step="5" oninput="updateLumberTotals()"></div>
         <div class="field"><label>Price per BF ($)</label><input type="number" id="lumber-price" placeholder="Optional" step="0.25" min="0" oninput="updateLumberTotals()"></div>
       </div>
       <div class="cab-preview" id="lumber-summary" style="display:none">
@@ -767,7 +767,7 @@ body.print-summary .print-header{display:block!important}
       <button class="btn btn-sm" onclick="addTrimRow()">+ Add Run</button>
 
       <div class="cab-opts-grid" style="margin-top:14px">
-        <div class="field"><label>Waste %</label><input type="number" id="trim-waste" value="15" min="0" max="40" step="5" oninput="updateTrimTotals()"></div>
+        <div class="field"><label>Waste %</label><input type="number" id="trim-waste" placeholder="15" min="0" max="40" step="5" oninput="updateTrimTotals()"></div>
         <div class="field"><label>Stock Length (ft)</label>
           <select id="trim-board-len" onchange="updateTrimTotals()">
             <option value="8">8 ft</option>
@@ -2204,7 +2204,9 @@ function getCabParts(type,W,H,D,T,shelves,cabQty,matLabel,opts){
          ffStileW=1.5,ffTopRail=2,ffBotRail=2.5,ffMat=''}=opts||{};
 
   const mat=matLabel||'';
-  const backMat=matLabel?'1/4 '+matLabel:'1/4" Back';
+  // Strip any leading thickness (e.g. "3/4 ", '1/2" ') before prepending "1/4 "
+  const strippedMat=matLabel.replace(/^[\d\/]+"?\s+/,'');
+  const backMat=matLabel?'1/4 '+strippedMat:'1/4" Back';
   const pfx=prefix?prefix+' – ':'';
   const r=n=>Math.round(n*1000)/1000;
   const part=(label,w,h,qty,m)=>({label:pfx+label,w:r(w),h:r(h),qty:qty*cabQty,mat:m!==undefined?m:mat});

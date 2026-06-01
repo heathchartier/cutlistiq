@@ -89,7 +89,7 @@ Format:
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-5',
+        model: 'claude-sonnet-4-5',  // Sonnet: same quality for structured analysis, ~5x cheaper than Opus
         max_tokens: 1024,
         messages: [{
           role: 'user',
