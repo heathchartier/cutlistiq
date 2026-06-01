@@ -2143,9 +2143,11 @@ async function handleSignIn(){
   if(!email||!pass){errEl.textContent='Please enter your email and password.';return;}
   errEl.textContent='Signing in…';errEl.style.color='#9aa3ad';
   if(btn) btn.disabled=true;
-  const {error}=await _sb.auth.signInWithPassword({email,password:pass});
+  const {data:signInData,error}=await _sb.auth.signInWithPassword({email,password:pass});
   if(btn) btn.disabled=false;
   if(error){errEl.style.color='#ff6b6b';errEl.textContent=error.message;return;}
+  // Set currentUser immediately from response — don't wait for onAuthStateChange
+  if(signInData?.session){currentUser=signInData.session.user;await loadUserPlan();}
   closeAuthModal();
   checkPendingPromo();
   await checkPendingPlan();
