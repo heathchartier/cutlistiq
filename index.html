@@ -258,6 +258,23 @@ canvas.sheet-canvas{display:block;border:1px solid #3a4149;border-radius:2px;bac
 .promo-field{flex:1;background:#1a1d21;border:1.5px solid #3a4149;border-radius:4px;padding:7px 10px;color:#f0f2f5;font-family:'DM Mono',monospace;font-size:.85rem;text-transform:uppercase;letter-spacing:.08em}
 .promo-field:focus{outline:none;border-color:#00e5b8}
 .promo-msg{font-size:.78rem;margin-top:6px;min-height:16px}
+.upgrade-plans{display:flex;gap:10px;padding:0 20px 12px}
+.upgrade-plan{flex:1;background:#151719;border:1.5px solid #2e3540;border-radius:8px;padding:14px;cursor:pointer;transition:border-color .15s;display:flex;flex-direction:column}
+.upgrade-plan:hover{border-color:#00e5b8}
+.upgrade-plan.plan-pro{border-color:#f7b731}
+.upgrade-plan.plan-pro:hover{border-color:#ffd166}
+.upgrade-plan-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:#9aa3ad;margin-bottom:4px}
+.upgrade-plan.plan-pro .upgrade-plan-name{color:#f7b731}
+.upgrade-plan-price{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.8rem;color:#00e5b8;line-height:1}
+.upgrade-plan.plan-pro .upgrade-plan-price{color:#f7b731}
+.upgrade-plan-price span{font-size:.85rem;font-weight:400;color:#9aa3ad}
+.upgrade-plan-features{list-style:none;font-size:.72rem;color:#9aa3ad;margin:8px 0 12px;line-height:1.7;flex:1}
+.upgrade-plan-features li::before{content:'✓ ';color:#00e5b8}
+.upgrade-plan.plan-pro .upgrade-plan-features li::before{color:#f7b731}
+.upgrade-plan-cta{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;background:#1a2e28;border:1.5px solid #00e5b8;color:#00e5b8;border-radius:4px;padding:7px;text-align:center;cursor:pointer;transition:background .15s;width:100%}
+.upgrade-plan-cta:hover{background:#003d2a}
+.upgrade-plan.plan-pro .upgrade-plan-cta{background:#2a1f00;border-color:#f7b731;color:#f7b731}
+.upgrade-plan.plan-pro .upgrade-plan-cta:hover{background:#3d2d00}
 
 /* ── Auth Modal ── */
 .auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center}
@@ -368,6 +385,7 @@ body.print-summary .print-header{display:block!important}
   <div id="auth-user-display" style="display:none" class="auth-user">
     <span class="auth-user-email" id="auth-user-email"></span>
     <span class="auth-plan-badge" id="auth-plan-badge">FREE</span>
+    <button class="auth-sign-out" id="billing-btn" onclick="manageBilling()" style="display:none;color:#00e5b8">Billing</button>
     <button class="auth-sign-out" onclick="handleSignOut()">Sign Out</button>
   </div>
   <button class="btn btn-primary" onclick="optimize()">▶ Optimize</button>
@@ -846,20 +864,30 @@ body.print-summary .print-header{display:block!important}
       <div class="upgrade-title">Upgrade to Shop Pro</div>
       <div class="upgrade-sub" id="upgrade-sub-msg">You've used your 3 free optimizations today.</div>
     </div>
-    <div class="upgrade-body">
-      <ul class="upgrade-features">
-        <li>Unlimited optimizations — no daily limits</li>
-        <li>AI cut analysis powered by Claude Opus</li>
-        <li>Cabinet builder — generate cut lists from specs</li>
-        <li>Named project save &amp; load</li>
-        <li>Material cost calculator &amp; job quotes</li>
-        <li>Remnant / offcut tracker</li>
-        <li>Cut sequence for panel saw workflow</li>
-        <li>Branded PDF reports for clients</li>
-      </ul>
-      <div class="upgrade-price">
-        <div class="price-amount">$19<span style="font-size:1.2rem;font-weight:400;color:#9aa3ad">/mo</span></div>
-        <div class="price-yearly">or $149/year — save 35%</div>
+    <div class="upgrade-plans">
+      <div class="upgrade-plan" onclick="goToPro('quickcut')">
+        <div class="upgrade-plan-name">Quick Cut</div>
+        <div class="upgrade-plan-price">$9<span>/mo</span></div>
+        <ul class="upgrade-plan-features">
+          <li>Unlimited optimizations</li>
+          <li>No daily limits</li>
+          <li>10 saved projects</li>
+          <li>Excel &amp; CSV import</li>
+          <li>AI photo import</li>
+        </ul>
+        <button class="upgrade-plan-cta">Start 7-Day Trial →</button>
+      </div>
+      <div class="upgrade-plan plan-pro" onclick="goToPro('pro')">
+        <div class="upgrade-plan-name">Shop Pro ★</div>
+        <div class="upgrade-plan-price">$19<span>/mo</span></div>
+        <ul class="upgrade-plan-features">
+          <li>Everything in Quick Cut</li>
+          <li>Cabinet builder</li>
+          <li>Material cost &amp; estimates</li>
+          <li>Lumber &amp; trim calc</li>
+          <li>AI cut analysis</li>
+        </ul>
+        <button class="upgrade-plan-cta">Start 7-Day Trial →</button>
       </div>
     </div>
     <div class="upgrade-promo">
@@ -871,8 +899,7 @@ body.print-summary .print-header{display:block!important}
       <div id="promo-msg" class="promo-msg"></div>
     </div>
     <div class="upgrade-footer">
-      <button class="btn" onclick="closeUpgradeModal()">Maybe Later</button>
-      <button class="btn btn-primary" onclick="goToPro()">Start Free Trial →</button>
+      <button class="btn" style="flex:1;justify-content:center" onclick="closeUpgradeModal()">Maybe Later</button>
     </div>
   </div>
 </div>
@@ -1834,16 +1861,96 @@ function applyPromoCode(){
   showSaveStatus('Shop Pro unlocked ✓');
 }
 
-function goToPro(){
-  // TODO: Replace with Stripe payment link when ready
+async function goToPro(planType='pro'){
   closeUpgradeModal();
-  if(!currentUser){ openAuthModal('up'); return; }
-  setMode('pro');
-  showSaveStatus('Shop Pro unlocked ✓');
+  if(!currentUser){
+    localStorage.setItem('cutlistiq_pending_plan', planType);
+    openAuthModal('up');
+    return;
+  }
+  await startStripeCheckout(planType);
+}
+
+async function startStripeCheckout(planType){
+  showSaveStatus('Opening checkout…');
+  try{
+    const res=await fetch('/api/create-checkout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        userId:currentUser.id,
+        email:currentUser.email,
+        planType,
+        returnUrl:window.location.origin+window.location.pathname,
+      }),
+    });
+    const {url,error}=await res.json();
+    if(error||!url){showSaveStatus('Checkout failed — try again');return;}
+    window.location.href=url;
+  }catch(err){
+    console.error('Checkout error:',err);
+    showSaveStatus('Checkout failed — try again');
+  }
+}
+
+async function manageBilling(){
+  if(!currentUser){return;}
+  showSaveStatus('Opening billing portal…');
+  try{
+    const res=await fetch('/api/customer-portal',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        userId:currentUser.id,
+        returnUrl:window.location.origin+window.location.pathname,
+      }),
+    });
+    const {url,error}=await res.json();
+    if(error||!url){showSaveStatus('Could not open billing portal — try again');return;}
+    window.location.href=url;
+  }catch(err){
+    console.error('Portal error:',err);
+    showSaveStatus('Could not open billing portal — try again');
+  }
+}
+
+async function checkPendingPlan(){
+  const pending=localStorage.getItem('cutlistiq_pending_plan');
+  if(!pending||!currentUser) return;
+  localStorage.removeItem('cutlistiq_pending_plan');
+  await startStripeCheckout(pending);
+}
+
+async function handleCheckoutReturn(){
+  const params=new URLSearchParams(window.location.search);
+  const status=params.get('checkout');
+  if(!status) return;
+  window.history.replaceState({},'',window.location.pathname);
+  if(status==='success'){
+    showSaveStatus('Payment successful! Activating your plan…');
+    if(!currentUser||!_sb) return;
+    let attempts=0;
+    const poll=setInterval(async()=>{
+      attempts++;
+      await loadUserPlan();
+      if(userPlan==='pro'||userPlan==='quickcut'||attempts>=6){
+        clearInterval(poll);
+        applyAuthMode();
+        updateAuthUI();
+        const planLabel=userPlan==='pro'?'Shop Pro':'Quick Cut Unlimited';
+        showSaveStatus(userPlan==='pro'||userPlan==='quickcut'
+          ?`${planLabel} activated! ✓`
+          :'Plan activating — refresh in a moment if needed');
+      }
+    },2000);
+  } else if(status==='canceled'){
+    showSaveStatus('Checkout canceled — come back when ready!');
+  }
 }
 
 // ── SAVED PROJECTS ────────────────────────────────────────────────────────────
 const MAX_PROJECTS_FREE = 3;
+const MAX_PROJECTS_QUICK = 10;
 
 function getSavedProjects(){
   try{ return JSON.parse(localStorage.getItem('cutlistiq_projects')||'[]'); }
@@ -1856,6 +1963,7 @@ function renderProjectsList(){
   if(!list) return;
   const projects=getSavedProjects();
   const isPro=userPlan==='pro'||(localStorage.getItem('cutlistiq_promo')==='UNLOCKED'&&currentUser);
+  const saveLimit=isPro?Infinity:userPlan==='quickcut'?MAX_PROJECTS_QUICK:MAX_PROJECTS_FREE;
   if(!projects.length){
     list.innerHTML='<div class="proj-empty">No saved projects yet</div>';
   } else {
@@ -1867,8 +1975,9 @@ function renderProjectsList(){
       </div>`).join('');
   }
   if(limitMsg){
-    if(!isPro) limitMsg.textContent=`${projects.length}/${MAX_PROJECTS_FREE} projects (upgrade for unlimited)`;
-    else limitMsg.textContent=`${projects.length} saved project${projects.length===1?'':'s'}`;
+    if(isPro) limitMsg.textContent=`${projects.length} saved project${projects.length===1?'':'s'}`;
+    else if(userPlan==='quickcut') limitMsg.textContent=`${projects.length}/${MAX_PROJECTS_QUICK} projects`;
+    else limitMsg.textContent=`${projects.length}/${MAX_PROJECTS_FREE} projects (upgrade for unlimited)`;
   }
 }
 
@@ -1877,9 +1986,11 @@ function saveProject(){
   const projNameField=document.getElementById('proj-name');
   const name=(nameInput?.value||projNameField?.value||'').trim()||'Untitled Job';
   const isPro=userPlan==='pro'||(localStorage.getItem('cutlistiq_promo')==='UNLOCKED'&&currentUser);
+  const saveLimit=isPro?Infinity:userPlan==='quickcut'?MAX_PROJECTS_QUICK:MAX_PROJECTS_FREE;
   const projects=getSavedProjects();
-  if(!isPro&&projects.length>=MAX_PROJECTS_FREE){
-    showSaveStatus('Limit reached — upgrade to Shop Pro for unlimited saves');
+  if(projects.length>=saveLimit){
+    const msg=isPro?'Save error':userPlan==='quickcut'?`Limit reached — upgrade to Shop Pro for unlimited saves`:`Limit reached — upgrade for more saves`;
+    showSaveStatus(msg);
     return;
   }
   const snapshot={
@@ -1944,9 +2055,12 @@ async function initSupabase(){
     else{currentUser=null;userPlan='none';}
     updateAuthUI();
     applyAuthMode();
+    // Handle email confirmation redirect — user clicks confirm link and lands here signed in
+    if(event==='SIGNED_IN') await checkPendingPlan();
   });
   updateAuthUI();
   applyAuthMode();
+  await handleCheckoutReturn();
 }
 
 async function loadUserPlan(){
@@ -1983,11 +2097,14 @@ function updateAuthUI(){
     userDisplay.style.display='flex';
     if(emailEl) emailEl.textContent=currentUser.email;
     if(badgeEl){
-      badgeEl.textContent=userPlan==='pro'?'PRO':'FREE';
-      badgeEl.style.background=userPlan==='pro'?'#002a1e':'#1a1d21';
-      badgeEl.style.borderColor=userPlan==='pro'?'#00e5b8':'#5a6472';
-      badgeEl.style.color=userPlan==='pro'?'#00e5b8':'#5a6472';
+      const isPro=userPlan==='pro', isQuick=userPlan==='quickcut';
+      badgeEl.textContent=isPro?'PRO':isQuick?'QUICK':'FREE';
+      badgeEl.style.background=isPro?'#002a1e':isQuick?'#1a1d21':'#1a1d21';
+      badgeEl.style.borderColor=isPro?'#00e5b8':isQuick?'#00e5b8':'#5a6472';
+      badgeEl.style.color=isPro?'#00e5b8':isQuick?'#00e5b8':'#5a6472';
     }
+    const billingBtn=document.getElementById('billing-btn');
+    if(billingBtn) billingBtn.style.display=(userPlan==='pro'||userPlan==='quickcut')?'':'none';
   } else {
     signinBtn.style.display='';
     userDisplay.style.display='none';
@@ -2031,6 +2148,7 @@ async function handleSignIn(){
   if(error){errEl.style.color='#ff6b6b';errEl.textContent=error.message;return;}
   closeAuthModal();
   checkPendingPromo();
+  await checkPendingPlan();
   showSaveStatus('Signed in ✓');
 }
 
