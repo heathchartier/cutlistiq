@@ -408,19 +408,21 @@ body.print-summary .print-header{display:block!important}
     Parts / Cuts
     <button class="btn btn-sm" onclick="addPart()">+ Add</button>
   </div>
-  <table class="data-table">
+  <div style="overflow-x:auto;margin:0 -2px">
+  <table class="data-table" style="min-width:320px">
     <thead><tr>
       <th style="width:18px"></th>
-      <th style="min-width:80px">Label</th>
-      <th style="width:72px">Width</th>
-      <th style="width:72px">Length</th>
-      <th style="width:58px">Qty</th>
-      <th style="width:24px" title="Allow Rotation">⊞</th>
-      <th id="eb-col-header" style="width:104px;display:none">T&nbsp;B&nbsp;L&nbsp;R</th>
-      <th style="width:22px"></th>
+      <th style="min-width:72px">Label</th>
+      <th style="width:64px">Width</th>
+      <th style="width:64px">Length</th>
+      <th style="width:48px">Qty</th>
+      <th style="width:22px" title="Allow Rotation">⊞</th>
+      <th id="eb-col-header" style="width:90px;display:none">T&nbsp;B&nbsp;L&nbsp;R</th>
+      <th style="width:20px"></th>
     </tr></thead>
     <tbody id="parts-body"></tbody>
   </table>
+  </div>
 </div>
 
 <!-- SETTINGS -->
@@ -778,8 +780,8 @@ function renderParts(){
   parts.forEach((p,i)=>{
     const tr=document.createElement('tr');
     const bs=on=>on
-      ?`width:24px;height:24px;border-radius:3px;border:2px solid #00e5b8;background:#00e5b8;color:#0f1112;font-size:.65rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;padding:0;line-height:1;flex-shrink:0;vertical-align:middle`
-      :`width:24px;height:24px;border-radius:3px;border:2px solid #5a6470;background:#23282e;color:#9aa3ad;font-size:.65rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;padding:0;line-height:1;flex-shrink:0;vertical-align:middle`;
+      ?`width:20px;height:20px;border-radius:3px;border:2px solid #00e5b8;background:#00e5b8;color:#0f1112;font-size:.6rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;padding:0;line-height:1;flex-shrink:0;vertical-align:middle`
+      :`width:20px;height:20px;border-radius:3px;border:2px solid #5a6470;background:#23282e;color:#9aa3ad;font-size:.6rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;padding:0;line-height:1;flex-shrink:0;vertical-align:middle`;
     const ebCell=ebOn?`<td style="padding:2px 3px;white-space:nowrap">
       <button style="${bs(p.eb.t)}" onclick="toggleEB(${i},'t')" title="Top">T</button>
       <button style="${bs(p.eb.b)}" onclick="toggleEB(${i},'b')" title="Bottom">B</button>
@@ -1070,8 +1072,20 @@ function renderResults(){
   const wastePct=totalArea?wasteArea/totalArea*100:0;
 
   const jobCost=calcJobCost(sheets);
+  // Break sheet count down by size when multiple stock sizes are used
+  const sheetSizeMap={};
+  sheets.forEach(s=>{
+    const dim=`${s.w}×${s.h}`;
+    const label=s.mat?`${dim} ${s.mat}`:dim;
+    sheetSizeMap[label]=(sheetSizeMap[label]||0)+1;
+  });
+  const sheetSizeKeys=Object.keys(sheetSizeMap);
+  const sheetsCards=sheetSizeKeys.length===1
+    ?card(sheets.length,'Sheets Used')
+    :sheetSizeKeys.map(k=>card(sheetSizeMap[k],k+' sheets')).join('');
+
   document.getElementById('summary-grid').innerHTML=
-    card(sheets.length,'Sheets Used')+
+    sheetsCards+
     card(placedParts.length,'Parts Placed')+
     card(wastePct.toFixed(1)+'%','Total Waste')+
     card((100-wastePct).toFixed(1)+'%','Efficiency')+
