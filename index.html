@@ -1865,7 +1865,7 @@ async function goToPro(planType='pro'){
   closeUpgradeModal();
   if(!currentUser){
     localStorage.setItem('cutlistiq_pending_plan', planType);
-    openAuthModal('up');
+    openAuthModal('in');
     return;
   }
   await startStripeCheckout(planType);
