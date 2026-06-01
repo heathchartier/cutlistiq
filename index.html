@@ -283,6 +283,14 @@ canvas.sheet-canvas{display:block;border:1px solid #3a4149;border-radius:2px;bac
 
 /* ── Pro Label ── */
 .pro-label{font-size:.58rem;font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:.1em;color:#f7b731;text-transform:uppercase;background:#2a2200;border:1px solid #f7b731;border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle;line-height:1}
+/* ── Estimate section ── */
+.est-row{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-size:.8rem;border-radius:3px;margin-bottom:2px;color:#9aa3ad}
+.est-row:nth-child(odd){background:#0f1112}
+.est-row span:last-child{font-family:'DM Mono',monospace;color:#f0f2f5;font-weight:600;white-space:nowrap}
+.est-row-sub{border-top:1px solid #3a4149;margin-top:6px;padding-top:7px;color:#f0f2f5;font-weight:600}
+.est-row-sub span:last-child{color:#00e5b8}
+.est-row-total{background:#002a25!important;border:1px solid #00e5b8;margin-top:4px;border-radius:4px;padding:8px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.95rem;color:#f0f2f5}
+.est-row-total span:last-child{color:#00e5b8;font-size:1.1rem}
 
 /* ── AI Insights Panel ── */
 .ai-panel{background:#1a1d21;border:1px solid #00e5b8;border-radius:6px;overflow:hidden}
@@ -562,6 +570,42 @@ body.print-summary .print-header{display:block!important}
   <div class="section-title">Material Costs <span class="pro-label">PRO</span></div>
   <div style="font-size:.74rem;color:#9aa3ad;margin-bottom:10px">Cost per sheet — used to calculate your total job material cost.</div>
   <div id="cost-inputs"></div>
+</div>
+
+<!-- LABOR & ESTIMATE (Shop Pro) -->
+<div class="section" id="pro-estimate" style="display:none">
+  <div class="section-title">Labor &amp; Estimate <span class="pro-label">PRO</span></div>
+  <div class="row">
+    <div class="field">
+      <label>Labor Hours</label>
+      <input type="number" id="labor-hours" placeholder="e.g. 12" min="0" step="0.5" oninput="updateEstimate();schedSave()">
+    </div>
+    <div class="field">
+      <label>Rate ($/hr)</label>
+      <input type="number" id="labor-rate" placeholder="e.g. 75" min="0" step="5" oninput="updateEstimate();schedSave()">
+    </div>
+  </div>
+  <div class="field" style="margin-bottom:12px">
+    <label>Markup % <span style="color:#5a6472;font-weight:400">(applied to material + labor)</span></label>
+    <input type="number" id="estimate-markup" placeholder="0" min="0" max="200" step="5" oninput="updateEstimate();schedSave()">
+  </div>
+  <div id="estimate-breakdown" style="display:none">
+    <div class="est-row" id="est-mat-row" style="display:none">
+      <span>Material</span><span id="est-mat-val">—</span>
+    </div>
+    <div class="est-row" id="est-labor-row" style="display:none">
+      <span>Labor</span><span id="est-labor-val">—</span>
+    </div>
+    <div class="est-row est-row-sub" id="est-sub-row" style="display:none">
+      <span>Subtotal</span><span id="est-sub-val">—</span>
+    </div>
+    <div class="est-row" id="est-markup-row" style="display:none">
+      <span id="est-markup-label">Markup</span><span id="est-markup-val">—</span>
+    </div>
+    <div class="est-row est-row-total" id="est-total-row" style="display:none">
+      <span>Total Estimate</span><span id="est-total-val">—</span>
+    </div>
+  </div>
 </div>
 
   </aside>
@@ -1270,6 +1314,7 @@ function renderResults(){
   document.getElementById('tab-btn-lumber').style.display=appMode==='pro'?'':'none';
   document.getElementById('tab-btn-ai').style.display=appMode==='pro'?'':'none';
   switchTab('layouts');
+  if(appMode==='pro') updateEstimate();
 
   let totalArea=0,usedArea=0;
   sheets.forEach(s=>{totalArea+=s.w*s.h;s.placements.forEach(p=>usedArea+=p.w*p.h);});
@@ -1295,7 +1340,19 @@ function renderResults(){
     card(wastePct.toFixed(1)+'%','Total Waste')+
     card((100-wastePct).toFixed(1)+'%','Efficiency')+
     (unplaced.length?cardColored(unplaced.length,'#ff5c5c','Unplaced'):'')+
-    (jobCost!==null&&jobCost>0?cardColored('$'+jobCost.toFixed(2),'#f7b731','Material Cost'):'');
+    (()=>{
+      if(jobCost===null||jobCost<=0) return '';
+      const hours=+document.getElementById('labor-hours')?.value||0;
+      const rate=+document.getElementById('labor-rate')?.value||0;
+      const mkup=+document.getElementById('estimate-markup')?.value||0;
+      const labor=hours*rate;
+      if(labor>0){
+        const sub=jobCost+labor;
+        const total=sub*(1+mkup/100);
+        return cardColored('$'+total.toFixed(2),'#f7b731','Est. Total');
+      }
+      return cardColored('$'+jobCost.toFixed(2),'#f7b731','Material Cost');
+    })();
 
   function sheetSignature(sheet){
     const sorted=[...sheet.placements]
@@ -1572,7 +1629,10 @@ function schedSave(){
         projName:document.getElementById('proj-name')?.value||'',
         projClient:document.getElementById('proj-client')?.value||'',
         projDate:document.getElementById('proj-date')?.value||'',
-        projQuote:document.getElementById('proj-quote')?.value||''
+        projQuote:document.getElementById('proj-quote')?.value||'',
+        laborHours:document.getElementById('labor-hours')?.value||'',
+        laborRate:document.getElementById('labor-rate')?.value||'',
+        estimateMarkup:document.getElementById('estimate-markup')?.value||''
       };
       localStorage.setItem('cutlistiq_save',JSON.stringify(state));
       showSaveStatus('Saved ✓');
@@ -1613,6 +1673,9 @@ function loadSavedState(){
       if(s.projClient&&document.getElementById('proj-client')) document.getElementById('proj-client').value=s.projClient;
       if(s.projDate&&document.getElementById('proj-date')) document.getElementById('proj-date').value=s.projDate;
       if(s.projQuote&&document.getElementById('proj-quote')) document.getElementById('proj-quote').value=s.projQuote;
+      if(s.laborHours&&document.getElementById('labor-hours')) document.getElementById('labor-hours').value=s.laborHours;
+      if(s.laborRate&&document.getElementById('labor-rate')) document.getElementById('labor-rate').value=s.laborRate;
+      if(s.estimateMarkup&&document.getElementById('estimate-markup')) document.getElementById('estimate-markup').value=s.estimateMarkup;
       setMode('quick'); // always quick — applyAuthMode() upgrades to pro if user is authed
     },0);
     renderStocks();renderParts();
@@ -1638,7 +1701,7 @@ initSupabase();
 });
 
 // Auto-save project info fields when changed
-['proj-name','proj-client','proj-date','proj-quote'].forEach(id=>{
+['proj-name','proj-client','proj-date','proj-quote','labor-hours','labor-rate','estimate-markup'].forEach(id=>{
   const el=document.getElementById(id);
   if(el) el.addEventListener('input',schedSave);
 });
@@ -1657,7 +1720,7 @@ function setMode(mode){
   document.getElementById('mode-quick').classList.toggle('active',mode==='quick');
   document.getElementById('mode-pro').classList.toggle('active',mode==='pro');
   // Show/hide pro-only sidebar sections
-  ['pro-saved-projects','pro-project','pro-costs'].forEach(id=>{
+  ['pro-saved-projects','pro-project','pro-costs','pro-estimate'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.style.display=mode==='pro'?'':'none';
   });
@@ -2039,6 +2102,60 @@ function calcJobCost(sheets){
     const cost=stockCosts[sheet.stockIdx??0]||0;
     return total+cost;
   },0);
+}
+
+function updateEstimate(){
+  const hours=+document.getElementById('labor-hours')?.value||0;
+  const rate=+document.getElementById('labor-rate')?.value||0;
+  const markupPct=+document.getElementById('estimate-markup')?.value||0;
+  const laborCost=hours*rate;
+  const matCost=results?calcJobCost(results):null;
+
+  const bd=document.getElementById('estimate-breakdown');
+  if(!bd) return;
+
+  // Show breakdown only when something is entered
+  if(!hours&&!rate&&(!matCost||matCost<=0)){bd.style.display='none';return;}
+  bd.style.display='';
+
+  const show=(id,val,rowId)=>{
+    const row=document.getElementById(rowId);
+    const el=document.getElementById(id);
+    if(!row||!el) return;
+    if(val>0){row.style.display='';el.textContent='$'+val.toFixed(2);}
+    else row.style.display='none';
+  };
+
+  show('est-mat-val',matCost||0,'est-mat-row');
+  show('est-labor-val',laborCost,'est-labor-row');
+
+  const subtotal=(matCost||0)+laborCost;
+  const subRow=document.getElementById('est-sub-row');
+  const subVal=document.getElementById('est-sub-val');
+  if(subRow&&subVal&&subtotal>0){
+    // Only show subtotal row if we have both material and labor
+    subRow.style.display=(matCost>0&&laborCost>0)?'':'none';
+    subVal.textContent='$'+subtotal.toFixed(2);
+  }
+
+  const markupRow=document.getElementById('est-markup-row');
+  const totalRow=document.getElementById('est-total-row');
+  const markupLabel=document.getElementById('est-markup-label');
+  const totalVal=document.getElementById('est-total-val');
+
+  if(markupPct>0&&subtotal>0){
+    const markupAmt=subtotal*markupPct/100;
+    const total=subtotal+markupAmt;
+    if(markupRow){markupRow.style.display='';document.getElementById('est-markup-val').textContent=`${markupPct}%  +$${markupAmt.toFixed(2)}`;}
+    if(totalRow){totalRow.style.display='';totalVal.textContent='$'+total.toFixed(2);}
+  } else if(subtotal>0){
+    if(markupRow) markupRow.style.display='none';
+    // Show total row as the final number even without markup
+    if(totalRow){totalRow.style.display='';totalVal.textContent='$'+subtotal.toFixed(2);}
+  } else {
+    if(markupRow) markupRow.style.display='none';
+    if(totalRow) totalRow.style.display='none';
+  }
 }
 
 // ── AI INSIGHTS — Claude Opus ─────────────────────────────────────────────────
