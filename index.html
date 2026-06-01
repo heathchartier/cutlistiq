@@ -155,7 +155,8 @@ select option{background:#23282e;color:#f0f2f5}
 .sheet-count-badge{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;color:#00e5b8;background:#002a25;border:2px solid #00e5b8;border-radius:4px;padding:2px 10px;white-space:nowrap;letter-spacing:.02em}
 .sheet-canvas-wrap{padding:12px;overflow-x:auto;background:#0f1112}
 /* ── Cabinet Builder ── */
-.cab-type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.cab-section-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:#9aa3ad;margin-bottom:10px;margin-top:4px}
+.cab-type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:16px}
 .cab-type-card{border:1.5px solid #3a4149;border-radius:6px;padding:14px 10px;cursor:pointer;transition:all .15s;text-align:center;background:#0f1112;user-select:none}
 .cab-type-card:hover{border-color:#00e5b8;background:#002a1e}
 .cab-type-card.active{border-color:#00e5b8;background:#002a25}
@@ -582,6 +583,7 @@ body.print-summary .print-header{display:block!important}
     <button class="tab" onclick="switchTab('waste')">Waste Analysis</button>
     <button class="tab" id="tab-btn-edgebanding" style="display:none" onclick="switchTab('edgebanding')">Edge Banding</button>
     <button class="tab" id="tab-btn-cabinet" style="display:none" onclick="switchTab('cabinet')">🗄 Cabinet Builder</button>
+    <button class="tab" id="tab-btn-lumber" style="display:none" onclick="switchTab('lumber')">🪵 Lumber &amp; Trim</button>
     <button class="tab" id="tab-btn-ai" style="display:none" onclick="switchTab('ai')">✦ AI Insights</button>
   </div>
 
@@ -610,28 +612,100 @@ body.print-summary .print-header{display:block!important}
   </div>
 
   <div class="tab-content" id="tab-cabinet">
-    <div style="max-width:760px;padding:4px 0">
+    <div style="max-width:820px;padding:4px 0">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:#f0f2f5;letter-spacing:.02em;margin-bottom:3px">Cabinet Builder <span style="font-size:.85rem;font-weight:400;color:#00e5b8">PRO</span></div>
-      <div style="font-size:.82rem;color:#9aa3ad;margin-bottom:20px">Pick a cabinet type, enter your dimensions, and click Add to Cut List — parts drop straight into the optimizer.</div>
+      <div style="font-size:.82rem;color:#9aa3ad;margin-bottom:18px">Configure a cabinet, generate the full cut list, then optimize. Add multiple cabinets to build a complete job.</div>
 
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:#9aa3ad;margin-bottom:10px">Cabinet Type</div>
+      <div class="cab-section-label">Cabinet Type</div>
       <div class="cab-type-grid" id="cab-type-grid"></div>
 
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:#9aa3ad;margin-bottom:10px">Dimensions</div>
-      <div class="cab-dims-grid">
-        <div class="field"><label>Width (in)</label><input type="number" id="cab-w" value="18" min="6" max="96" step="0.5" oninput="updateCabPreview()"></div>
-        <div class="field"><label>Height (in)</label><input type="number" id="cab-h" value="34.5" min="6" max="120" step="0.5" oninput="updateCabPreview()"></div>
-        <div class="field"><label>Depth (in)</label><input type="number" id="cab-d" value="24" min="6" max="36" step="0.5" oninput="updateCabPreview()"></div>
+      <div class="field" style="margin-bottom:14px">
+        <label>Cabinet ID / Label <span style="color:#5a6472;font-weight:400">(optional — prefixes all part names, e.g. B1, Upper-L)</span></label>
+        <input type="text" id="cab-label" placeholder="e.g. B1 or Kitchen Upper" oninput="updateCabPreview()">
       </div>
 
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:#9aa3ad;margin-bottom:10px">Options</div>
+      <div class="cab-section-label">Dimensions</div>
+      <div class="cab-dims-grid">
+        <div class="field"><label>Width (in)</label><input type="number" id="cab-w" value="18" min="6" max="120" step="0.5" oninput="updateCabPreview()"></div>
+        <div class="field"><label>Height (in)</label><input type="number" id="cab-h" value="34.5" min="6" max="120" step="0.5" oninput="updateCabPreview()"></div>
+        <div class="field"><label>Depth (in)</label><input type="number" id="cab-d" value="24" min="6" max="48" step="0.5" oninput="updateCabPreview()"></div>
+      </div>
+
+      <div class="cab-section-label">Construction Style</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div class="cab-type-card active" id="const-frameless" onclick="selectConstruction('frameless')">
+          <div class="cab-type-icon">⬜</div>
+          <div class="cab-type-name">Frameless</div>
+          <div class="cab-type-desc">European / full access</div>
+        </div>
+        <div class="cab-type-card" id="const-faceframe" onclick="selectConstruction('faceframe')">
+          <div class="cab-type-icon">🪟</div>
+          <div class="cab-type-name">Face Frame</div>
+          <div class="cab-type-desc">Traditional / NA style</div>
+        </div>
+      </div>
+
+      <div class="cab-section-label">Options</div>
       <div class="cab-opts-grid">
         <div class="field"><label>Mat. Thickness (in)</label><input type="number" id="cab-mat" value="0.75" min="0.25" max="1.5" step="0.125" oninput="updateCabPreview()"></div>
         <div class="field"><label>Adj. Shelves</label><input type="number" id="cab-shelves" value="1" min="0" max="8" step="1" oninput="updateCabPreview()"></div>
         <div class="field"><label>Qty (cabinets)</label><input type="number" id="cab-qty" value="1" min="1" max="99" step="1" oninput="updateCabPreview()"></div>
       </div>
+
+      <div class="cab-section-label">Doors</div>
+      <div class="cab-opts-grid">
+        <div class="field"><label>Number of Doors</label>
+          <select id="cab-doors" onchange="updateCabPreview()">
+            <option value="0">No doors</option>
+            <option value="1">1 door</option>
+            <option value="2">2 doors</option>
+          </select>
+        </div>
+        <div class="field"><label>Overlay (in)</label><input type="number" id="cab-overlay" value="0.5" min="0" max="1.5" step="0.0625" oninput="updateCabPreview()"></div>
+        <div class="field"><label>Door Material</label><input type="text" id="cab-door-mat" placeholder="Same as box" oninput="updateCabPreview()"></div>
+      </div>
+
+      <!-- Toe Kick — base/drawer/pantry only -->
+      <div id="cab-toekick-section">
+        <div class="cab-section-label">Toe Kick</div>
+        <div class="cab-opts-grid">
+          <div class="field"><label>Include Toe Kick</label>
+            <select id="cab-toekick" onchange="updateCabPreview()">
+              <option value="none">None / not included</option>
+              <option value="piece" selected>Add to cut list</option>
+            </select>
+          </div>
+          <div class="field"><label>Height (in)</label><input type="number" id="cab-tk-h" value="3.5" min="2" max="8" step="0.25" oninput="updateCabPreview()"></div>
+          <div class="field"><label>Setback (in)</label><input type="number" id="cab-tk-d" value="3" min="1" max="6" step="0.25" oninput="updateCabPreview()"></div>
+        </div>
+      </div>
+
+      <!-- Drawer Boxes — drawer base only -->
+      <div id="cab-drawer-section" style="display:none">
+        <div class="cab-section-label">Drawer Boxes</div>
+        <div class="cab-opts-grid">
+          <div class="field"><label># Drawers</label><input type="number" id="cab-drawers" value="3" min="1" max="6" step="1" oninput="updateCabPreview()"></div>
+          <div class="field"><label>Slide Clearance (in)</label><input type="number" id="cab-slide-clr" value="1" min="0.5" max="3" step="0.25" oninput="updateCabPreview()"></div>
+          <div class="field"><label>Drawer Box Material</label><input type="text" id="cab-drw-mat" placeholder="Same as box" oninput="updateCabPreview()"></div>
+        </div>
+      </div>
+
+      <!-- Face Frame settings — faceframe only -->
+      <div id="cab-ff-section" style="display:none">
+        <div class="cab-section-label">Face Frame Details</div>
+        <div class="cab-opts-grid">
+          <div class="field"><label>Stile Width (in)</label><input type="number" id="cab-ff-stile" value="1.5" min="1" max="3" step="0.125" oninput="updateCabPreview()"></div>
+          <div class="field"><label>Top Rail (in)</label><input type="number" id="cab-ff-top" value="2" min="1" max="5" step="0.25" oninput="updateCabPreview()"></div>
+          <div class="field"><label>Bottom Rail (in)</label><input type="number" id="cab-ff-bot" value="2.5" min="1" max="5" step="0.25" oninput="updateCabPreview()"></div>
+        </div>
+        <div class="field" style="margin-bottom:14px">
+          <label>Face Frame Material <span style="color:#5a6472;font-weight:400">(e.g. Poplar, Oak — generates as separate parts)</span></label>
+          <input type="text" id="cab-ff-mat" placeholder="Leave blank to match box material" oninput="updateCabPreview()">
+        </div>
+      </div>
+
       <div class="field" style="margin-bottom:18px">
-        <label>Material Label (optional — e.g. 3/4 Melamine White)</label>
+        <label>Box Material <span style="color:#5a6472;font-weight:400">(e.g. 3/4 Melamine White)</span></label>
         <input type="text" id="cab-mat-label" placeholder="Leave blank to use stock sheet material" oninput="updateCabPreview()">
       </div>
 
@@ -641,6 +715,73 @@ body.print-summary .print-header{display:block!important}
       </div>
 
       <button class="btn btn-primary" style="width:100%;padding:12px 0;font-size:1rem" onclick="addCabinetToList()">＋ Add to Cut List</button>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-lumber">
+    <div style="max-width:820px;padding:4px 0">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:#f0f2f5;letter-spacing:.02em;margin-bottom:3px">Lumber &amp; Trim Calculator <span style="font-size:.85rem;font-weight:400;color:#00e5b8">PRO</span></div>
+      <div style="font-size:.82rem;color:#9aa3ad;margin-bottom:18px">Calculate board footage for solid wood (face frames, hardwood parts) and linear footage for trim and molding.</div>
+
+      <div class="cab-section-label">Board Footage — Solid Wood</div>
+      <div style="font-size:.75rem;color:#5a6472;margin-bottom:10px;font-family:'DM Mono',monospace">BF = (thickness × width × length) ÷ 144</div>
+      <div style="overflow-x:auto;margin-bottom:8px">
+      <table class="data-table" id="lumber-table">
+        <thead><tr>
+          <th>Part / Species</th>
+          <th style="width:62px">Thick (in)</th>
+          <th style="width:62px">Width (in)</th>
+          <th style="width:72px">Length (in)</th>
+          <th style="width:44px">Qty</th>
+          <th style="width:60px">BF / pc</th>
+          <th style="width:60px">Total BF</th>
+          <th style="width:22px"></th>
+        </tr></thead>
+        <tbody id="lumber-body"></tbody>
+      </table>
+      </div>
+      <button class="btn btn-sm" onclick="addLumberRow()">+ Add Part</button>
+
+      <div class="cab-opts-grid" style="margin-top:14px">
+        <div class="field"><label>Waste Factor %</label><input type="number" id="lumber-waste" value="20" min="0" max="60" step="5" oninput="updateLumberTotals()"></div>
+        <div class="field"><label>Price per BF ($)</label><input type="number" id="lumber-price" placeholder="Optional" step="0.25" min="0" oninput="updateLumberTotals()"></div>
+      </div>
+      <div class="cab-preview" id="lumber-summary" style="display:none">
+        <div class="cab-preview-title">Board Footage Summary</div>
+        <div id="lumber-summary-content"></div>
+      </div>
+
+      <div class="cab-section-label" style="margin-top:24px">Linear Footage — Trim &amp; Molding</div>
+      <div style="overflow-x:auto;margin-bottom:8px">
+      <table class="data-table" id="trim-table">
+        <thead><tr>
+          <th>Description (crown, base, casing…)</th>
+          <th style="width:80px">Length (in)</th>
+          <th style="width:44px">Qty</th>
+          <th style="width:70px">Lin. Ft</th>
+          <th style="width:22px"></th>
+        </tr></thead>
+        <tbody id="trim-body"></tbody>
+      </table>
+      </div>
+      <button class="btn btn-sm" onclick="addTrimRow()">+ Add Run</button>
+
+      <div class="cab-opts-grid" style="margin-top:14px">
+        <div class="field"><label>Waste %</label><input type="number" id="trim-waste" value="15" min="0" max="40" step="5" oninput="updateTrimTotals()"></div>
+        <div class="field"><label>Stock Length (ft)</label>
+          <select id="trim-board-len" onchange="updateTrimTotals()">
+            <option value="8">8 ft</option>
+            <option value="10">10 ft</option>
+            <option value="12" selected>12 ft</option>
+            <option value="16">16 ft</option>
+          </select>
+        </div>
+        <div class="field"><label>Price per LF ($)</label><input type="number" id="trim-price" placeholder="Optional" step="0.10" min="0" oninput="updateTrimTotals()"></div>
+      </div>
+      <div class="cab-preview" id="trim-summary" style="display:none">
+        <div class="cab-preview-title">Trim Summary</div>
+        <div id="trim-summary-content"></div>
+      </div>
     </div>
   </div>
 
@@ -1122,6 +1263,7 @@ function renderResults(){
   document.getElementById('results-panel').style.display='flex';
   document.getElementById('tab-btn-edgebanding').style.display=ebOn?'':'none';
   document.getElementById('tab-btn-cabinet').style.display=appMode==='pro'?'':'none';
+  document.getElementById('tab-btn-lumber').style.display=appMode==='pro'?'':'none';
   document.getElementById('tab-btn-ai').style.display=appMode==='pro'?'':'none';
   switchTab('layouts');
 
@@ -1518,11 +1660,13 @@ function setMode(mode){
   if(mode==='pro') renderProjectsList();
 
   // Cabinet Builder tab — Pro only, always visible in Pro mode
+  const lumberTab=document.getElementById('tab-btn-lumber');
+  if(lumberTab) lumberTab.style.display=mode==='pro'?'':'none';
   const cabTab=document.getElementById('tab-btn-cabinet');
   if(cabTab){
     cabTab.style.display=mode==='pro'?'':'none';
     if(mode==='pro'){
-      // Show results panel so cabinet builder is accessible before first optimize
+      // Show results panel so Pro tools are accessible before first optimize
       if(!results){
         document.getElementById('results-empty').style.display='none';
         document.getElementById('results-panel').style.display='flex';
@@ -2006,14 +2150,16 @@ function setStatus(id,type,msg){
 }
 
 // ── CABINET BUILDER ───────────────────────────────────────────────────────────
+// ── CABINET BUILDER — full feature set ────────────────────────────────────────
 const CAB_TYPES=[
-  {id:'base',   name:'Base Cabinet',  icon:'🗄', desc:'Standard floor cabinet', dW:18, dH:34.5, dD:24},
-  {id:'upper',  name:'Upper Cabinet', icon:'🪟', desc:'Wall-mounted cabinet',   dW:18, dH:30,   dD:12},
-  {id:'pantry', name:'Pantry / Tall', icon:'🏛', desc:'Full-height pantry',     dW:18, dH:84,   dD:24},
-  {id:'drawer', name:'Drawer Base',   icon:'🗃', desc:'All-drawer floor cabinet',dW:18, dH:34.5, dD:24},
-  {id:'island', name:'Island / Pen.', icon:'📐', desc:'No back, open both sides',dW:36, dH:34.5, dD:24},
+  {id:'base',   name:'Base Cabinet',  icon:'🗄', desc:'Standard floor cabinet',  dW:18,dH:34.5,dD:24},
+  {id:'upper',  name:'Upper Cabinet', icon:'🪟', desc:'Wall-mounted cabinet',    dW:18,dH:30,  dD:12},
+  {id:'pantry', name:'Pantry / Tall', icon:'🏛', desc:'Full-height pantry',      dW:18,dH:84,  dD:24},
+  {id:'drawer', name:'Drawer Base',   icon:'🗃', desc:'All-drawer floor cabinet', dW:18,dH:34.5,dD:24},
+  {id:'island', name:'Island / Pen.', icon:'📐', desc:'No back, open both sides', dW:36,dH:34.5,dD:24},
 ];
 let cabType='base';
+let cabConstruction='frameless';
 
 function initCabinetBuilder(){
   const grid=document.getElementById('cab-type-grid');
@@ -2025,58 +2171,143 @@ function initCabinetBuilder(){
       <div class="cab-type-name">${t.name}</div>
       <div class="cab-type-desc">${t.desc}</div>
     </div>`).join('');
+  updateCabVisibility();
   updateCabPreview();
 }
 
 function selectCabType(id){
   cabType=id;
-  document.querySelectorAll('.cab-type-card').forEach((c,i)=>c.classList.toggle('active',CAB_TYPES[i].id===id));
+  document.querySelectorAll('#cab-type-grid .cab-type-card').forEach((c,i)=>c.classList.toggle('active',CAB_TYPES[i].id===id));
   const t=CAB_TYPES.find(t=>t.id===id);
-  if(t){
-    document.getElementById('cab-w').value=t.dW;
-    document.getElementById('cab-h').value=t.dH;
-    document.getElementById('cab-d').value=t.dD;
-  }
+  if(t){ document.getElementById('cab-w').value=t.dW; document.getElementById('cab-h').value=t.dH; document.getElementById('cab-d').value=t.dD; }
+  updateCabVisibility();
   updateCabPreview();
 }
 
-function getCabParts(type,W,H,D,T,shelves,cabQty,matLabel){
-  // All frameless (European) construction
+function selectConstruction(c){
+  cabConstruction=c;
+  document.getElementById('const-frameless').classList.toggle('active',c==='frameless');
+  document.getElementById('const-faceframe').classList.toggle('active',c==='faceframe');
+  document.getElementById('cab-ff-section').style.display=c==='faceframe'?'':'none';
+  updateCabPreview();
+}
+
+function updateCabVisibility(){
+  const hasTK=['base','drawer','pantry'].includes(cabType);
+  document.getElementById('cab-toekick-section').style.display=hasTK?'':'none';
+  document.getElementById('cab-drawer-section').style.display=cabType==='drawer'?'':'none';
+}
+
+function getCabParts(type,W,H,D,T,shelves,cabQty,matLabel,opts){
+  const {prefix='',construction='frameless',toeKick='none',toeKickH=3.5,
+         doors=0,doorOverlay=0.5,doorMat='',drawerCount=3,slideClr=1,drawerMat='',
+         ffStileW=1.5,ffTopRail=2,ffBotRail=2.5,ffMat=''}=opts||{};
+
   const mat=matLabel||'';
   const backMat=matLabel?'1/4 '+matLabel:'1/4" Back';
-  const r=(n,places=4)=>Math.round(n*(10**places))/(10**places);
-  const part=(label,w,h,qty,m)=>({label,w:r(w),h:r(h),qty:qty*cabQty,mat:m!==undefined?m:mat});
+  const pfx=prefix?prefix+' – ':'';
+  const r=n=>Math.round(n*1000)/1000;
+  const part=(label,w,h,qty,m)=>({label:pfx+label,w:r(w),h:r(h),qty:qty*cabQty,mat:m!==undefined?m:mat});
   const p=[];
 
+  // ── CARCASS ──────────────────────────────────────────────────────────────────
   if(type==='base'||type==='drawer'){
-    p.push(part('Side Panel',      D,       H,       2));
-    p.push(part('Bottom',          W-2*T,   D,       1));
-    p.push(part('Top Nailer',      W-2*T,   3.5,     2));
-    p.push(part('Back Panel',      W,       H-T,     1, backMat));
-    if(shelves>0) p.push(part('Adj. Shelf', W-2*T-0.125, D-2, shelves));
+    p.push(part('Side Panel',D,H,2));
+    p.push(part('Bottom',W-2*T,D,1));
+    p.push(part('Top Nailer',W-2*T,3.5,2));
+    p.push(part('Back Panel',W,H-T,1,backMat));
+    if(shelves>0) p.push(part('Adj. Shelf',W-2*T-0.125,D-2,shelves));
   } else if(type==='upper'){
-    p.push(part('Side Panel',      D,       H,       2));
-    p.push(part('Bottom',          W-2*T,   D,       1));
-    p.push(part('Top',             W-2*T,   D,       1));
-    p.push(part('Back Panel',      W,       H,       1, backMat));
-    if(shelves>0) p.push(part('Adj. Shelf', W-2*T-0.125, D-1, shelves));
+    p.push(part('Side Panel',D,H,2));
+    p.push(part('Bottom',W-2*T,D,1));
+    p.push(part('Top',W-2*T,D,1));
+    p.push(part('Back Panel',W,H,1,backMat));
+    if(shelves>0) p.push(part('Adj. Shelf',W-2*T-0.125,D-1,shelves));
   } else if(type==='pantry'){
-    p.push(part('Side Panel',      D,       H,       2));
-    p.push(part('Bottom',          W-2*T,   D,       1));
-    p.push(part('Top',             W-2*T,   D,       1));
-    p.push(part('Mid Rail',        W-2*T,   3.5,     2));
-    p.push(part('Back Panel',      W,       H,       1, backMat));
-    if(shelves>0) p.push(part('Adj. Shelf', W-2*T-0.125, D-2, shelves));
+    p.push(part('Side Panel',D,H,2));
+    p.push(part('Bottom',W-2*T,D,1));
+    p.push(part('Top',W-2*T,D,1));
+    p.push(part('Mid Rail',W-2*T,3.5,2));
+    p.push(part('Back Panel',W,H,1,backMat));
+    if(shelves>0) p.push(part('Adj. Shelf',W-2*T-0.125,D-2,shelves));
   } else if(type==='island'){
-    // Open on two sides — no back, extra nailer rails for attachment
-    p.push(part('Side Panel',      D,       H,       2));
-    p.push(part('Bottom',          W-2*T,   D,       1));
-    p.push(part('Top Nailer',      W-2*T,   3.5,     2));
-    p.push(part('Front Rail',      W-2*T,   3.5,     1));
-    p.push(part('Back Rail',       W-2*T,   3.5,     1));
-    if(shelves>0) p.push(part('Adj. Shelf', W-2*T-0.125, D-2, shelves));
+    p.push(part('Side Panel',D,H,2));
+    p.push(part('Bottom',W-2*T,D,1));
+    p.push(part('Top Nailer',W-2*T,3.5,2));
+    p.push(part('Front Rail',W-2*T,3.5,1));
+    p.push(part('Back Rail',W-2*T,3.5,1));
+    if(shelves>0) p.push(part('Adj. Shelf',W-2*T-0.125,D-2,shelves));
   }
+
+  // ── TOE KICK ─────────────────────────────────────────────────────────────────
+  if(toeKick==='piece'&&['base','drawer','pantry'].includes(type)){
+    p.push(part('Toe Kick',W-2*T,toeKickH,1));
+  }
+
+  // ── FACE FRAME ───────────────────────────────────────────────────────────────
+  if(construction==='faceframe'){
+    const ffM=ffMat||mat;
+    const innerH=H-ffTopRail-ffBotRail;
+    p.push(part('FF Stile',ffStileW,H,2,ffM));
+    p.push(part('FF Top Rail',W-2*ffStileW,ffTopRail,1,ffM));
+    p.push(part('FF Bot Rail',W-2*ffStileW,ffBotRail,1,ffM));
+    if(doors===2) p.push(part('FF Mid Stile',ffStileW,innerH,1,ffM));
+  }
+
+  // ── DOORS ────────────────────────────────────────────────────────────────────
+  if(doors>0){
+    const dM=doorMat||mat;
+    if(construction==='frameless'){
+      const totalW=W+doorOverlay*2;
+      const doorW=doors===2?(totalW-0.125)/2:totalW-0.125;
+      const doorH=H+doorOverlay*2-0.125;
+      p.push(part('Door',r(doorW),r(doorH),doors,dM));
+    } else {
+      const openW=W-2*ffStileW;
+      const doorW=doors===2?(openW-ffStileW)/2-0.0625:openW-0.0625;
+      const doorH=H-ffTopRail-ffBotRail-0.0625;
+      p.push(part('Door',r(doorW),r(doorH),doors,dM));
+    }
+  }
+
+  // ── DRAWER BOXES ─────────────────────────────────────────────────────────────
+  if(type==='drawer'&&drawerCount>0){
+    const dM=drawerMat?drawerMat:backMat;
+    const boxW=r(W-2*T-slideClr);
+    const boxD=r(D-T-1.5);
+    const tkH=toeKick==='piece'?toeKickH:4;
+    const spaceH=H-T-7-tkH;
+    const ratios={1:[1],2:[0.55,0.45],3:[0.38,0.33,0.29],4:[0.32,0.27,0.24,0.17],5:[0.26,0.23,0.20,0.17,0.14],6:[0.22,0.19,0.17,0.15,0.14,0.13]};
+    const heights=(ratios[drawerCount]||Array(drawerCount).fill(1/drawerCount)).map(ratio=>r(Math.round(spaceH*ratio*4)/4));
+    heights.forEach((oh,i)=>{
+      const bh=r(oh-0.5);
+      const n=i+1;
+      p.push(part(`Drw${n} Frnt/Back`,boxW,bh,2,dM));
+      p.push(part(`Drw${n} Side`,boxD,bh,2,dM));
+      p.push(part(`Drw${n} Bottom`,r(boxW+T-0.25),r(boxD+T-0.25),1,backMat));
+    });
+  }
+
   return p;
+}
+
+function getCabOpts(){
+  return {
+    prefix:(document.getElementById('cab-label')?.value||'').trim(),
+    construction:cabConstruction,
+    toeKick:document.getElementById('cab-toekick')?.value||'none',
+    toeKickH:+document.getElementById('cab-tk-h')?.value||3.5,
+    doors:+document.getElementById('cab-doors')?.value||0,
+    doorOverlay:+document.getElementById('cab-overlay')?.value||0.5,
+    doorMat:(document.getElementById('cab-door-mat')?.value||'').trim(),
+    drawerCount:+document.getElementById('cab-drawers')?.value||3,
+    slideClr:+document.getElementById('cab-slide-clr')?.value||1,
+    drawerMat:(document.getElementById('cab-drw-mat')?.value||'').trim(),
+    ffStileW:+document.getElementById('cab-ff-stile')?.value||1.5,
+    ffTopRail:+document.getElementById('cab-ff-top')?.value||2,
+    ffBotRail:+document.getElementById('cab-ff-bot')?.value||2.5,
+    ffMat:(document.getElementById('cab-ff-mat')?.value||'').trim(),
+  };
 }
 
 function updateCabPreview(){
@@ -2087,16 +2318,16 @@ function updateCabPreview(){
   const shelves=+document.getElementById('cab-shelves').value||0;
   const qty=+document.getElementById('cab-qty').value||1;
   const matLabel=(document.getElementById('cab-mat-label')?.value||'').trim();
-  const partsList=getCabParts(cabType,W,H,D,T,shelves,qty,matLabel);
-  const listEl=document.getElementById('cab-part-list');
-  if(!listEl) return;
-  const totalPcs=partsList.reduce((s,p)=>s+p.qty,0);
-  listEl.innerHTML=partsList.map(p=>`
+  const list=getCabParts(cabType,W,H,D,T,shelves,qty,matLabel,getCabOpts());
+  const el=document.getElementById('cab-part-list');
+  if(!el) return;
+  const total=list.reduce((s,p)=>s+p.qty,0);
+  el.innerHTML=list.map(p=>`
     <div class="cab-part-row">
       <span class="cab-part-label">${p.qty}× <strong>${p.label}</strong>${p.mat?` <span style="color:#9aa3ad;font-size:.7rem">(${p.mat})</span>`:''}</span>
       <span class="cab-part-dim">${p.w}" × ${p.h}"</span>
     </div>`).join('')+
-    `<div style="font-size:.72rem;color:#9aa3ad;margin-top:8px;text-align:right">${partsList.length} part types · ${totalPcs} total pieces</div>`;
+    `<div style="font-size:.72rem;color:#9aa3ad;margin-top:8px;text-align:right">${list.length} part types · ${total} total pieces</div>`;
 }
 
 function addCabinetToList(){
@@ -2107,27 +2338,93 @@ function addCabinetToList(){
   const shelves=+document.getElementById('cab-shelves').value||0;
   const qty=+document.getElementById('cab-qty').value||1;
   const matLabel=(document.getElementById('cab-mat-label')?.value||'').trim();
-  const generated=getCabParts(cabType,W,H,D,T,shelves,qty,matLabel);
-
+  const generated=getCabParts(cabType,W,H,D,T,shelves,qty,matLabel,getCabOpts());
   generated.forEach(gp=>{
-    const existing=parts.find(p=>p.label===gp.label&&p.w===gp.w&&p.h===gp.h&&p.mat===gp.mat);
-    if(existing) existing.qty=(existing.qty||1)+gp.qty;
+    const ex=parts.find(p=>p.label===gp.label&&p.w===gp.w&&p.h===gp.h&&p.mat===gp.mat);
+    if(ex) ex.qty=(ex.qty||1)+gp.qty;
     else parts.push({label:gp.label,w:gp.w,h:gp.h,qty:gp.qty,mat:gp.mat||'',
       rotate:true,color:COLORS[parts.length%COLORS.length],eb:{t:false,b:false,l:false,r:false}});
   });
-
-  renderParts();
-  schedSave();
-
-  const totalPcs=generated.reduce((s,p)=>s+p.qty,0);
-  showSaveStatus(`${totalPcs} parts added — click ▶ Optimize!`);
-
-  // On mobile, flip back to sidebar so user can see the parts that just populated
+  renderParts(); schedSave();
+  showSaveStatus(`${generated.reduce((s,p)=>s+p.qty,0)} parts added — click ▶ Optimize!`);
   if(window.innerWidth<=700){
     document.getElementById('sidebar').classList.remove('mob-hidden');
-    const mp=document.getElementById('main-panel')||document.querySelector('.main');
+    const mp=document.querySelector('.main');
     if(mp) mp.classList.add('mob-hidden');
   }
+}
+
+// ── LUMBER & TRIM CALCULATOR ───────────────────────────────────────────────────
+let lumberRows=[];
+let trimRows=[];
+
+function addLumberRow(){
+  lumberRows.push({label:'',thick:0.75,w:0,len:0,qty:1});
+  renderLumberTable();
+}
+function renderLumberTable(){
+  const tb=document.getElementById('lumber-body');
+  if(!tb) return;
+  const bf=(r)=>r.thick&&r.w&&r.len?(r.thick*r.w*r.len/144):0;
+  tb.innerHTML=lumberRows.map((r,i)=>`<tr>
+    <td><input type="text" value="${r.label}" placeholder="Poplar stile, Oak rail…" onchange="lumberRows[${i}].label=this.value"></td>
+    <td><input type="number" value="${r.thick||''}" step="0.25" min="0.25" placeholder="T" onchange="lumberRows[${i}].thick=+this.value;updateLumberTotals()"></td>
+    <td><input type="number" value="${r.w||''}" step="0.25" min="0.25" placeholder="W" onchange="lumberRows[${i}].w=+this.value;updateLumberTotals()"></td>
+    <td><input type="number" value="${r.len||''}" step="0.5" min="1" placeholder="L" onchange="lumberRows[${i}].len=+this.value;updateLumberTotals()"></td>
+    <td><input type="number" value="${r.qty||1}" min="1" onchange="lumberRows[${i}].qty=+this.value;updateLumberTotals()"></td>
+    <td style="color:#00e5b8;font-family:'DM Mono',monospace;font-size:.75rem;padding:3px 6px">${bf(r)?bf(r).toFixed(3):'-'}</td>
+    <td style="color:#00e5b8;font-family:'DM Mono',monospace;font-size:.75rem;padding:3px 6px">${bf(r)?(r.qty*bf(r)).toFixed(3):'-'}</td>
+    <td><button class="del-btn" onclick="lumberRows.splice(${i},1);renderLumberTable();updateLumberTotals()">✕</button></td>
+  </tr>`).join('');
+  updateLumberTotals();
+}
+function updateLumberTotals(){
+  const waste=+document.getElementById('lumber-waste')?.value||0;
+  const price=+document.getElementById('lumber-price')?.value||0;
+  const rawBF=lumberRows.reduce((s,r)=>s+(r.thick&&r.w&&r.len?r.qty*(r.thick*r.w*r.len/144):0),0);
+  const totalBF=rawBF*(1+waste/100);
+  const sumEl=document.getElementById('lumber-summary');
+  const conEl=document.getElementById('lumber-summary-content');
+  if(!rawBF){if(sumEl)sumEl.style.display='none';return;}
+  if(sumEl)sumEl.style.display='';
+  const cost=price?` — <strong style="color:#f7b731">$${(totalBF*price).toFixed(2)}</strong>`:'';
+  conEl.innerHTML=`
+    <div class="cab-part-row"><span class="cab-part-label">Net board footage</span><span class="cab-part-dim">${rawBF.toFixed(3)} BF</span></div>
+    <div class="cab-part-row"><span class="cab-part-label">With ${waste}% waste factor</span><span class="cab-part-dim">${totalBF.toFixed(2)} BF${cost}</span></div>`;
+}
+
+function addTrimRow(){
+  trimRows.push({label:'',len:0,qty:1});
+  renderTrimTable();
+}
+function renderTrimTable(){
+  const tb=document.getElementById('trim-body');
+  if(!tb) return;
+  tb.innerHTML=trimRows.map((r,i)=>`<tr>
+    <td><input type="text" value="${r.label}" placeholder="Crown, base, casing…" onchange="trimRows[${i}].label=this.value"></td>
+    <td><input type="number" value="${r.len||''}" step="1" min="1" placeholder="inches" onchange="trimRows[${i}].len=+this.value;updateTrimTotals()"></td>
+    <td><input type="number" value="${r.qty||1}" min="1" onchange="trimRows[${i}].qty=+this.value;updateTrimTotals()"></td>
+    <td style="color:#00e5b8;font-family:'DM Mono',monospace;font-size:.75rem;padding:3px 6px">${r.len?(r.qty*r.len/12).toFixed(2)+"'":'-'}</td>
+    <td><button class="del-btn" onclick="trimRows.splice(${i},1);renderTrimTable();updateTrimTotals()">✕</button></td>
+  </tr>`).join('');
+  updateTrimTotals();
+}
+function updateTrimTotals(){
+  const waste=+document.getElementById('trim-waste')?.value||0;
+  const boardLen=+document.getElementById('trim-board-len')?.value||12;
+  const price=+document.getElementById('trim-price')?.value||0;
+  const rawLF=trimRows.reduce((s,r)=>s+(r.len?r.qty*r.len/12:0),0);
+  const totalLF=rawLF*(1+waste/100);
+  const boards=Math.ceil(totalLF/boardLen);
+  const sumEl=document.getElementById('trim-summary');
+  const conEl=document.getElementById('trim-summary-content');
+  if(!rawLF){if(sumEl)sumEl.style.display='none';return;}
+  if(sumEl)sumEl.style.display='';
+  const cost=price?` — <strong style="color:#f7b731">$${(totalLF*price).toFixed(2)}</strong>`:'';
+  conEl.innerHTML=`
+    <div class="cab-part-row"><span class="cab-part-label">Net linear footage</span><span class="cab-part-dim">${rawLF.toFixed(2)} LF</span></div>
+    <div class="cab-part-row"><span class="cab-part-label">With ${waste}% waste</span><span class="cab-part-dim">${totalLF.toFixed(2)} LF${cost}</span></div>
+    <div class="cab-part-row"><span class="cab-part-label">${boardLen}' boards needed</span><span class="cab-part-dim">${boards} boards</span></div>`;
 }
 
 // ── PANEL SPLIT RESIZE ────────────────────────────────────────────────────────
