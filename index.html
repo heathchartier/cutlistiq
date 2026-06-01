@@ -2162,11 +2162,17 @@ async function handleSignUp(){
   errEl.textContent='Creating account…';errEl.style.color='#9aa3ad';
   const {data,error}=await _sb.auth.signUp({email,password:pass,options:{emailRedirectTo:'https://cutlistiq.pro'}});
   if(error){errEl.style.color='#ff6b6b';errEl.textContent=error.message;return;}
+  // If email confirmation is off, Supabase returns a session immediately — sign in automatically
+  if(data?.session){
+    closeAuthModal();
+    checkPendingPromo();
+    await checkPendingPlan();
+    showSaveStatus('Account created ✓');
+    return;
+  }
+  // Email confirmation required
   errEl.style.color='#00e5b8';
-  const hasPending=localStorage.getItem('cutlistiq_pending_promo')||localStorage.getItem('cutlistiq_pending_plan');
-  errEl.textContent=hasPending
-    ?'✓ Check your email to confirm, then sign in to continue.'
-    :'✓ Account created! Check your email to confirm, then sign in.';
+  errEl.textContent='✓ Account created! Check your email to confirm, then sign in.';
 }
 
 function checkPendingPromo(){
