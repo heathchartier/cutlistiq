@@ -2160,7 +2160,7 @@ async function handleSignUp(){
   if(!email){errEl.textContent='Please enter your email.';return;}
   if(pass.length<6){errEl.textContent='Password must be at least 6 characters.';return;}
   errEl.textContent='Creating account…';errEl.style.color='#9aa3ad';
-  const {data,error}=await _sb.auth.signUp({email,password:pass,options:{emailRedirectTo:'https://cutlistiq.pro'}});
+  const {data,error}=await _sb.auth.signUp({email,password:pass});
   if(error){errEl.style.color='#ff6b6b';errEl.textContent=error.message;return;}
   // If email confirmation is off, Supabase returns a session immediately — sign in automatically
   if(data?.session){
