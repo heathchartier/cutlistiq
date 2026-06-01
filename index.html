@@ -105,8 +105,11 @@ select option{background:#23282e;color:#f0f2f5}
 .data-table input[type=text],.data-table input[type=number]{padding:3px 5px;font-size:.75rem;background:transparent;border:1.5px solid transparent;color:#f0f2f5;width:100%;min-width:0;box-sizing:border-box}
 .data-table input:focus{background:#0f1112;border-color:#00e5b8;border-radius:3px}
 /* Column resize handle */
-.col-resize-handle{position:absolute;right:0;top:0;bottom:0;width:6px;cursor:col-resize;z-index:2;background:transparent;transition:background .12s}
-.col-resize-handle:hover,.col-resize-handle.dragging{background:rgba(0,229,184,.35)}
+.col-resize-handle{position:absolute;right:-4px;top:0;bottom:0;width:12px;cursor:col-resize;z-index:2;display:flex;align-items:center;justify-content:center}
+.col-resize-handle::after{content:'';width:3px;height:60%;border-radius:2px;background:transparent;transition:background .12s}
+.col-resize-handle:hover::after,.col-resize-handle.dragging::after{background:#00e5b8}
+/* Drag tooltip */
+#col-resize-tooltip{position:fixed;background:#00e5b8;color:#0f1112;font-family:'DM Mono',monospace;font-size:.68rem;font-weight:700;padding:2px 6px;border-radius:3px;pointer-events:none;z-index:9999;display:none;transform:translateY(-110%)}
 
 .color-swatch{width:16px;height:16px;border-radius:3px;border:1px solid #3a4149;cursor:pointer;display:block}
 .del-btn{background:none;border:none;cursor:pointer;color:#9aa3ad;font-size:.9rem;padding:2px 3px;border-radius:3px;transition:color .15s;line-height:1}
@@ -405,6 +408,7 @@ body.print-summary .print-header{display:block!important}
 </div>
 
 <button class="mob-toggle" id="mob-toggle" onclick="toggleSidebar()" title="Toggle inputs">⊞</button>
+<div id="col-resize-tooltip"></div>
 <div class="app-body">
   <aside class="sidebar" id="sidebar">
 
@@ -2467,14 +2471,17 @@ function initSplitResize(){
 }
 
 // ── COLUMN RESIZE ─────────────────────────────────────────────────────────────
+// Default column widths for double-click reset
+const COL_DEFAULTS={label:null,w:60,h:60,qty:48,'s-w':76,'s-h':76,'s-qty':52,'s-mat':null};
+
 function initColResize(){
   const COL_KEY='cutlistiq_colwidths';
+  const tooltip=document.getElementById('col-resize-tooltip');
+
   // Restore saved widths
   try{
     const saved=JSON.parse(localStorage.getItem(COL_KEY)||'{}');
     Object.entries(saved).forEach(([col,w])=>{
-      // parts table cols: th-label, th-w, th-h, th-qty
-      // stock table cols: sth-w, sth-h, sth-qty, sth-mat
       const th=document.getElementById('th-'+col)||document.getElementById('sth-'+col.replace('s-',''));
       if(th) th.style.width=w+'px';
     });
@@ -2482,6 +2489,25 @@ function initColResize(){
 
   document.querySelectorAll('.col-resize-handle').forEach(handle=>{
     let startX,startW,th;
+    const col=handle.dataset.col;
+
+    // Double-click: reset to default width
+    handle.addEventListener('dblclick',e=>{
+      e.preventDefault();
+      th=handle.parentElement;
+      const def=COL_DEFAULTS[col];
+      if(def){
+        th.style.width=def+'px';
+      } else {
+        th.style.width=''; // auto for flex columns
+      }
+      try{
+        const saved=JSON.parse(localStorage.getItem(COL_KEY)||'{}');
+        delete saved[col];
+        localStorage.setItem(COL_KEY,JSON.stringify(saved));
+      }catch{}
+    });
+
     handle.addEventListener('mousedown',e=>{
       e.preventDefault();
       th=handle.parentElement;
@@ -2490,19 +2516,25 @@ function initColResize(){
       handle.classList.add('dragging');
       document.body.style.cursor='col-resize';
       document.body.style.userSelect='none';
+      if(tooltip){tooltip.style.display='block';}
 
       const onMove=e=>{
         const newW=Math.max(32,startW+(e.clientX-startX));
         th.style.width=newW+'px';
+        if(tooltip){
+          tooltip.textContent=Math.round(newW)+'px';
+          tooltip.style.left=(e.clientX-20)+'px';
+          tooltip.style.top=(e.clientY)+'px';
+        }
       };
       const onUp=()=>{
         handle.classList.remove('dragging');
         document.body.style.cursor='';
         document.body.style.userSelect='';
-        // Persist widths
+        if(tooltip) tooltip.style.display='none';
         try{
           const saved=JSON.parse(localStorage.getItem(COL_KEY)||'{}');
-          saved[handle.dataset.col]=Math.round(th.getBoundingClientRect().width);
+          saved[col]=Math.round(th.getBoundingClientRect().width);
           localStorage.setItem(COL_KEY,JSON.stringify(saved));
         }catch{}
         document.removeEventListener('mousemove',onMove);
