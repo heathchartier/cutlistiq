@@ -428,17 +428,17 @@ body.print-summary .print-header{display:block!important}
     Parts / Cuts
     <button class="btn btn-sm" onclick="addPart()">+ Add</button>
   </div>
-  <div style="overflow-x:auto;margin:0 -2px" id="parts-table-wrap">
+  <div id="parts-table-wrap">
   <table class="data-table" id="parts-table">
     <thead><tr>
+      <th style="width:16px"></th>
+      <th id="th-label">Label<div class="col-resize-handle" data-col="label"></div></th>
+      <th id="th-w" style="width:60px">Width<div class="col-resize-handle" data-col="w"></div></th>
+      <th id="th-h" style="width:60px">Length<div class="col-resize-handle" data-col="h"></div></th>
+      <th id="th-qty" style="width:48px">Qty<div class="col-resize-handle" data-col="qty"></div></th>
+      <th style="width:20px" title="Allow Rotation">⊞</th>
+      <th id="eb-col-header" style="width:82px;display:none">T&nbsp;B&nbsp;L&nbsp;R</th>
       <th style="width:20px"></th>
-      <th id="th-label" style="width:105px">Label<div class="col-resize-handle" data-col="label"></div></th>
-      <th id="th-w" style="width:65px">Width<div class="col-resize-handle" data-col="w"></div></th>
-      <th id="th-h" style="width:65px">Length<div class="col-resize-handle" data-col="h"></div></th>
-      <th id="th-qty" style="width:46px">Qty<div class="col-resize-handle" data-col="qty"></div></th>
-      <th style="width:24px" title="Allow Rotation">⊞</th>
-      <th id="eb-col-header" style="width:90px;display:none">T&nbsp;B&nbsp;L&nbsp;R</th>
-      <th style="width:22px"></th>
     </tr></thead>
     <tbody id="parts-body"></tbody>
   </table>
@@ -836,14 +836,9 @@ function renderParts(){
   parts.forEach((p,i)=>{
     const tr=document.createElement('tr');
     const bs=on=>on
-      ?`width:20px;height:20px;border-radius:3px;border:2px solid #00e5b8;background:#00e5b8;color:#0f1112;font-size:.6rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;padding:0;line-height:1;flex-shrink:0;vertical-align:middle`
-      :`width:20px;height:20px;border-radius:3px;border:2px solid #5a6470;background:#23282e;color:#9aa3ad;font-size:.6rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;padding:0;line-height:1;flex-shrink:0;vertical-align:middle`;
-    const ebCell=ebOn?`<td style="padding:2px 3px;white-space:nowrap">
-      <button style="${bs(p.eb.t)}" onclick="toggleEB(${i},'t')" title="Top">T</button>
-      <button style="${bs(p.eb.b)}" onclick="toggleEB(${i},'b')" title="Bottom">B</button>
-      <button style="${bs(p.eb.l)}" onclick="toggleEB(${i},'l')" title="Left">L</button>
-      <button style="${bs(p.eb.r)}" onclick="toggleEB(${i},'r')" title="Right">R</button>
-    </td>`:'';
+      ?`width:18px;height:18px;border-radius:3px;border:2px solid #00e5b8;background:#00e5b8;color:#0f1112;font-size:.58rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;padding:0;line-height:1;flex-shrink:0`
+      :`width:18px;height:18px;border-radius:3px;border:2px solid #5a6470;background:#23282e;color:#9aa3ad;font-size:.58rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;padding:0;line-height:1;flex-shrink:0`;
+    const ebCell=ebOn?`<td style="padding:2px 3px"><div style="display:flex;gap:1px;align-items:center"><button style="${bs(p.eb.t)}" onclick="toggleEB(${i},'t')" title="Top">T</button><button style="${bs(p.eb.b)}" onclick="toggleEB(${i},'b')" title="Bottom">B</button><button style="${bs(p.eb.l)}" onclick="toggleEB(${i},'l')" title="Left">L</button><button style="${bs(p.eb.r)}" onclick="toggleEB(${i},'r')" title="Right">R</button></div></td>`:'';
     tr.innerHTML=`
       <td style="padding:3px"><span class="color-swatch" style="background:${p.color}" onclick="pickColor(${i})"></span></td>
       <td><input type="text" value="${p.label}" placeholder="${LABEL_HINTS[i%LABEL_HINTS.length]}" onchange="parts[${i}].label=this.value;schedSave()"></td>
