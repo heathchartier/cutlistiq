@@ -2163,7 +2163,10 @@ async function handleSignUp(){
   const {data,error}=await _sb.auth.signUp({email,password:pass,options:{emailRedirectTo:'https://cutlistiq.pro'}});
   if(error){errEl.style.color='#ff6b6b';errEl.textContent=error.message;return;}
   errEl.style.color='#00e5b8';
-  errEl.textContent='✓ Check your email to confirm, then sign in to redeem your code.';
+  const hasPending=localStorage.getItem('cutlistiq_pending_promo')||localStorage.getItem('cutlistiq_pending_plan');
+  errEl.textContent=hasPending
+    ?'✓ Check your email to confirm, then sign in to continue.'
+    :'✓ Account created! Check your email to confirm, then sign in.';
 }
 
 function checkPendingPromo(){
