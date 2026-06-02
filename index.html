@@ -252,6 +252,11 @@ canvas.sheet-canvas{display:block;border:1px solid #3a4149;border-radius:2px;bac
 .price-yearly{font-size:.76rem;color:#00e5b8;margin-top:3px}
 .upgrade-footer{display:flex;gap:8px;padding:14px 24px 20px}
 .upgrade-footer .btn{flex:1;justify-content:center}
+.upgrade-free-banner{margin:0 20px 10px;padding:12px 14px;background:#0d1f1a;border:1.5px solid #00e5b820;border-radius:7px;text-align:center}
+.upgrade-free-text{font-size:.75rem;color:#9aa3ad;line-height:1.5;margin-bottom:8px}
+.upgrade-free-text strong{color:#00e5b8}
+.upgrade-free-btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;background:transparent;border:1.5px solid #00e5b8;color:#00e5b8;border-radius:4px;padding:7px 16px;cursor:pointer;transition:background .15s;width:100%}
+.upgrade-free-btn:hover{background:#003d2a}
 .upgrade-promo{padding:0 24px 4px;text-align:center}
 .promo-divider{font-size:.72rem;color:#5a6472;margin-bottom:8px;text-transform:uppercase;letter-spacing:.1em}
 .promo-row{display:flex;gap:8px}
@@ -862,7 +867,7 @@ body.print-summary .print-header{display:block!important}
     <div class="upgrade-hero">
       <div class="upgrade-icon">⬛</div>
       <div class="upgrade-title">Upgrade to Shop Pro</div>
-      <div class="upgrade-sub" id="upgrade-sub-msg">You've used your 3 free optimizations today.</div>
+      <div class="upgrade-sub" id="upgrade-sub-msg">Unlock the full CutListIQ experience.</div>
     </div>
     <div class="upgrade-plans">
       <div class="upgrade-plan" onclick="goToPro('quickcut')">
@@ -889,6 +894,10 @@ body.print-summary .print-header{display:block!important}
         </ul>
         <button class="upgrade-plan-cta">Start 7-Day Trial →</button>
       </div>
+    </div>
+    <div class="upgrade-free-banner" id="upgrade-free-banner" style="display:none">
+      <div class="upgrade-free-text">Just need the basics? <strong>Create a free account</strong> — no daily limits &amp; 3 saved projects. Always free.</div>
+      <button class="upgrade-free-btn" onclick="closeUpgradeModal();openAuthModal('up')">Create Free Account →</button>
     </div>
     <div class="upgrade-promo">
       <div class="promo-divider">or enter a promo code</div>
@@ -1001,7 +1010,7 @@ let stockCosts= [];
 let saveTimer = null;
 let importPending = [];
 let sheetRows     = [];
-const FREE_LIMIT  = 3;
+const FREE_LIMIT  = 5;
 const SAVE_VERSION= 2;
 
 const COLORS = ['#4a9eff','#ff6b6b','#4ecb71','#f7b731','#a29bfe',
@@ -1195,8 +1204,7 @@ function placeNested(sheet,part,kerf,allowRotate,grainDir){
 
 // ── OPTIMIZE ──────────────────────────────────────────────────────────────────
 function optimize(){
-  // Daily limit — show upgrade nudge but don't block (payment not wired yet)
-  if(!canOptimize()) showUpgradeModal("You've used your "+FREE_LIMIT+" free optimizations today. Upgrade to Shop Pro for unlimited access.");
+  const guestAtLimit = !canOptimize();
 
   const validStocks=stocks.filter(s=>s.w>0&&s.h>0&&s.qty>0);
   if(!validStocks.length){alert('Add at least one complete stock sheet.');return;}
@@ -1318,6 +1326,8 @@ function optimize(){
   results={sheets,placedParts,unplaced,kerf,ebOn,ebThick,ebColor:ebColorVal};
   incrementUsage();
   renderResults();
+  // Show upgrade prompt after results so guest sees the value first
+  if(guestAtLimit) showUpgradeModal("Love the results? You've used your "+FREE_LIMIT+" free runs today.",'limit');
   // Trigger AI insights in Shop Pro mode
   if(appMode==='pro'){
     switchTab('ai');
@@ -1826,9 +1836,11 @@ function updateUsagePill(){
 }
 
 // ── UPGRADE MODAL ─────────────────────────────────────────────────────────────
-function showUpgradeModal(msg){
+function showUpgradeModal(msg,trigger='upgrade'){
   const sub=document.getElementById('upgrade-sub-msg');
-  if(sub) sub.textContent=msg||"You've used your "+FREE_LIMIT+" free optimizations today.";
+  if(sub) sub.textContent=msg||"Unlock the full CutListIQ experience.";
+  const banner=document.getElementById('upgrade-free-banner');
+  if(banner) banner.style.display=(!currentUser&&trigger==='limit')?'':'none';
   document.getElementById('upgrade-modal').classList.add('open');
 }
 
