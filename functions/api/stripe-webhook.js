@@ -32,24 +32,32 @@ async function updatePlan(env, userId, plan, customerId, subscriptionStatus) {
     return;
   }
 
-  const update = { plan, subscription_status: subscriptionStatus };
-  if (customerId) update.stripe_customer_id = customerId;
+  const patch = async (body) => {
+    const res = await fetch(`${supabaseUrl}/rest/v1/cutlistiq_profiles?id=eq.${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': serviceKey,
+        'Authorization': `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Supabase update error:', err);
+      return false;
+    }
+    return true;
+  };
 
-  const res = await fetch(`${supabaseUrl}/rest/v1/cutlistiq_profiles?id=eq.${userId}`, {
-    method: 'PATCH',
-    headers: {
-      'apikey': serviceKey,
-      'Authorization': `Bearer ${serviceKey}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal',
-    },
-    body: JSON.stringify(update),
-  });
+  // Always update plan first — this is the critical field
+  await patch({ plan });
 
-  if (!res.ok) {
-    const err = await res.text();
-    console.error('Supabase update error:', err);
-  }
+  // Update Stripe metadata columns separately so a missing column never blocks the plan update
+  const meta = { subscription_status: subscriptionStatus };
+  if (customerId) meta.stripe_customer_id = customerId;
+  await patch(meta);
 }
 
 export async function onRequestPost({ request, env }) {
