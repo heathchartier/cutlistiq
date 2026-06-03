@@ -57,15 +57,16 @@ Extract every part/cut from this image and return ONLY a JSON array — no expla
 
 Each item in the array should have:
 - "label": part name or description (string, use "Part" + number if unlabeled)
-- "w": width as a number in the same units shown (inches unless otherwise noted)
-- "h": length/height as a number
+- "w": the SHORTER dimension as a number in inches (width across the grain)
+- "h": the LONGER dimension as a number in inches (length with the grain)
 - "qty": quantity as a number (default 1 if not shown)
 - "mat": material type if visible (string, omit if not shown)
 
 Rules:
-- Convert fractions to decimals (e.g. 23-1/2 → 23.5, 3/4 → 0.75)
+- Always put the smaller number in "w" and the larger number in "h"
+- Convert fractions to decimals (e.g. 23-1/2 → 23.5, 18-1/4 → 18.25, 19-3/4 → 19.75, 64-1/8 → 64.125)
 - If the list shows feet, convert to inches (multiply by 12)
-- Ignore header rows, totals, notes
+- Ignore header rows, totals, thickness notes, material descriptions
 - If you cannot find any valid cut dimensions, return []
 
 Example output: [{"label":"Side Panel","w":23.5,"h":47.75,"qty":2,"mat":"3/4 Plywood"},{"label":"Shelf","w":22,"h":18,"qty":4}]`;
