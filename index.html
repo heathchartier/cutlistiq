@@ -1106,7 +1106,13 @@ function switchTab(name){
   const tc=document.getElementById('tab-'+name);
   if(tc) tc.classList.add('active');
 }
+function paintAllCanvases(){
+  document.querySelectorAll('[id^="canvas-"]').forEach(c=>{
+    if(!c._drawn&&c._paint){c._drawn=true;c._paint();}
+  });
+}
 function savePDF(){
+  paintAllCanvases();
   document.body.classList.remove('print-summary');
   const s=document.createElement('style');
   s.id='pdf-hint';s.textContent='@page{size:landscape;margin:1cm}';
@@ -1427,6 +1433,19 @@ function renderResults(){
   const sheetsGrid=document.getElementById('sheets-grid');
   sheetsGrid.innerHTML='';
 
+  // Draw each sheet canvas only when it scrolls into view so the main thread
+  // is never blocked by painting all sheets at once.
+  const canvasObserver=new IntersectionObserver((entries,obs)=>{
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting)return;
+      const canvas=entry.target;
+      if(canvas._drawn||!canvas._paint)return;
+      canvas._drawn=true;
+      obs.unobserve(canvas);
+      canvas._paint();
+    });
+  },{rootMargin:'300px'}); // pre-paint 300 px before visible
+
   sheetGroups.forEach((group,gi)=>{
     const sheet=group.sheet;
     const count=group.count;
@@ -1458,9 +1477,8 @@ function renderResults(){
       </div>`;
     sheetsGrid.appendChild(cardEl);
 
-    setTimeout(()=>{
-      const canvas=document.getElementById(`canvas-${gi}`);
-      if(!canvas)return;
+    const canvas=document.getElementById(`canvas-${gi}`);
+    canvas._paint=()=>{
       const ctx=canvas.getContext('2d');
       ctx.fillStyle='#f8f4ec';
       ctx.fillRect(0,0,cw,ch);
@@ -1512,7 +1530,8 @@ function renderResults(){
 
       ctx.strokeStyle='#444';ctx.lineWidth=2;
       ctx.strokeRect(1,1,cw-2,ch-2);
-    },0);
+    };
+    canvasObserver.observe(canvas);
   });
 
   // ── Cut list ──────────────────────────────────────────────────────────────
