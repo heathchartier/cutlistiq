@@ -80,7 +80,7 @@ Example output: [{"label":"Side Panel","w":23.5,"h":47.75,"qty":2,"mat":"3/4 Ply
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-5',
+        model: 'claude-opus-4-8',
         max_tokens: 2048,
         messages: [{
           role: 'user',
