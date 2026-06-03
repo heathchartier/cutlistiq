@@ -1308,10 +1308,14 @@ function optimize(){
     openSheets.push(ns);
 
     if(!madeProgress){
+      // Only place a piece whose primary dimension matches the first piece in the queue.
+      // This prevents e.g. a 48" piece from landing on a sheet opened for 64" pieces.
+      const firstMax=remaining.length>0?Math.max(remaining[0].w,remaining[0].h):0;
       let placedOne=false;
       const next=[];
       for(const part of remaining){
-        if(!placedOne){
+        const partMax=Math.max(part.w,part.h);
+        if(!placedOne&&Math.abs(partMax-firstMax)<=10){
           const r=tryPlace(ns,part,kerf,allowRotate,grainDir);
           if(r){
             ns.placements.push(r);
