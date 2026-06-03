@@ -2172,7 +2172,10 @@ async function handleSignIn(){
   if(!email||!pass){errEl.textContent='Please enter your email and password.';return;}
   errEl.textContent='Signing in…';errEl.style.color='#9aa3ad';
   if(btn) btn.disabled=true;
-  const {data:signInData,error}=await _sb.auth.signInWithPassword({email,password:pass});
+  const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('Connection timed out — please try again.')),12000));
+  let signInData,error;
+  try{({data:signInData,error}=await Promise.race([_sb.auth.signInWithPassword({email,password:pass}),timeout]));}
+  catch(e){error=e;}
   if(btn) btn.disabled=false;
   if(error){errEl.style.color='#ff6b6b';errEl.textContent=error.message;return;}
   // Set currentUser immediately from response — don't wait for onAuthStateChange
@@ -2191,7 +2194,11 @@ async function handleSignUp(){
   if(!email){errEl.textContent='Please enter your email.';return;}
   if(pass.length<6){errEl.textContent='Password must be at least 6 characters.';return;}
   errEl.textContent='Creating account…';errEl.style.color='#9aa3ad';
-  const {data,error}=await _sb.auth.signUp({email,password:pass});
+  const _timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('Connection timed out — please try again.')),12000));
+  let data,error;
+  try{({data,error}=await Promise.race([_sb.auth.signUp({email,password:pass}),_timeout]));}
+  catch(e){error=e;}
+
   if(error){errEl.style.color='#ff6b6b';errEl.textContent=error.message;return;}
   // If email confirmation is off, Supabase returns a session immediately — sign in automatically
   if(data?.session){
