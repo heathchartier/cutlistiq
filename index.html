@@ -3056,11 +3056,15 @@ function handlePhotoFile(file){
 function confirmImport(){
   if(!importPending.length)return;
   const count=importPending.length;
+  // Clear blank placeholder rows before importing so empty starters don't linger
+  parts  = parts.filter(p=>p.w>0&&p.h>0&&p.qty>0);
+  stocks = stocks.filter(s=>s.w>0&&s.h>0&&s.qty>0);
   importPending.forEach(p=>addPart(p.label,p.w,p.h,p.qty,true,{t:false,b:false,l:false,r:false}));
-  // Add a default stock sheet if none exist
+  // Add a default stock sheet if none exist after the clean-up
   if(!stocks.filter(s=>s.w>0&&s.h>0&&s.qty>0).length){
-    addStock(49,97,10,'Sheet Material');
+    addStock(49,97,200,'Sheet Material');
   }
+  renderStocks();
   closeImport();
   schedSave();
   showSaveStatus(`${count} parts imported ✓`);
