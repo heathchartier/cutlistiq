@@ -1198,14 +1198,40 @@ function placeNested(sheet,part,kerf,allowRotate,grainDir){
   }
   if(!best)return null;
   const{rect,w:pw,h:ph}=best;
-  sheet.freeRects.splice(sheet.freeRects.indexOf(rect),1);
-  const rW=rect.x+rect.w-(best.x+pw+kerf);
-  const tH=rect.y+rect.h-(best.y+ph+kerf);
-  if(rW>0.01) sheet.freeRects.push({x:best.x+pw+kerf,y:rect.y,      w:rW,  h:rect.h});
-  if(tH>0.01) sheet.freeRects.push({x:rect.x,        y:best.y+ph+kerf,w:rect.w,h:tH});
-  sheet.freeRects=sheet.freeRects.filter((r,ri)=>
-    !sheet.freeRects.some((o,oi)=>oi!==ri&&o.x<=r.x&&o.y<=r.y&&o.x+o.w>=r.x+r.w&&o.y+o.h>=r.y+r.h));
-  return{x:best.x,y:best.y,w:pw,h:ph,label:part.label,color:part.color,rotated:best.rotated,partRef:part};
+  const px=best.x,py=best.y;
+  const pxEnd=px+pw+kerf,pyEnd=py+ph+kerf; // placed piece extents including kerf gap
+
+  // Remove the chosen free rect
+  const others=sheet.freeRects.filter(r=>r!==rect);
+
+  // Split the chosen rect into (up to) 2 new free rects
+  const newRects=[];
+  const rW=rect.x+rect.w-pxEnd;
+  const tH=rect.y+rect.h-pyEnd;
+  if(rW>0.01) newRects.push({x:pxEnd,      y:rect.y, w:rW,      h:rect.h});
+  if(tH>0.01) newRects.push({x:rect.x, y:pyEnd,      w:rect.w,  h:tH    });
+
+  // ── MaxRects clip: trim every OTHER free rect against the newly placed piece.
+  // Without this, stale overlapping rects let future pieces land on occupied space.
+  others.forEach(r=>{
+    // No intersection — keep unchanged
+    if(r.x>=pxEnd||r.x+r.w<=px||r.y>=pyEnd||r.y+r.h<=py){
+      newRects.push(r);
+      return;
+    }
+    // Clip r against the placed piece — generate up to 4 non-overlapping sub-rects
+    if(r.x<px)     newRects.push({x:r.x,   y:r.y,   w:px-r.x,         h:r.h          });
+    if(r.x+r.w>pxEnd) newRects.push({x:pxEnd,y:r.y,  w:r.x+r.w-pxEnd,  h:r.h          });
+    if(r.y<py)     newRects.push({x:r.x,   y:r.y,   w:r.w,             h:py-r.y       });
+    if(r.y+r.h>pyEnd) newRects.push({x:r.x, y:pyEnd, w:r.w,             h:r.y+r.h-pyEnd});
+  });
+
+  // Remove subsumed rects (keep only maximal free rects)
+  sheet.freeRects=newRects.filter((r,ri)=>
+    r.w>0.01&&r.h>0.01&&
+    !newRects.some((o,oi)=>oi!==ri&&o.x<=r.x&&o.y<=r.y&&o.x+o.w>=r.x+r.w&&o.y+o.h>=r.y+r.h));
+
+  return{x:px,y:py,w:pw,h:ph,label:part.label,color:part.color,rotated:best.rotated,partRef:part};
 }
 
 // ── OPTIMIZE ──────────────────────────────────────────────────────────────────
