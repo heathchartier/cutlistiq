@@ -1488,40 +1488,57 @@ function renderResults(){
       for(let gx=0;gx<=cw;gx+=gs){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,ch);ctx.stroke();}
       for(let gy=0;gy<=ch;gy+=gs){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(cw,gy);ctx.stroke();}
 
+      // Clip all piece drawing to sheet bounds — prevents any float-drift overflow
+      ctx.save();
+      ctx.beginPath();ctx.rect(0,0,cw,ch);ctx.clip();
+
       sheet.placements.forEach(p=>{
-        const px=p.x*scale,py=p.y*scale,pw=p.w*scale,ph=p.h*scale;
-        ctx.fillStyle=p.color+'bb';ctx.fillRect(px,py,pw,ph);
-        ctx.strokeStyle=p.color;ctx.lineWidth=1.5;
-        ctx.strokeRect(px+.75,py+.75,pw-1.5,ph-1.5);
+        const px=Math.round(p.x*scale),py=Math.round(p.y*scale);
+        const pw=Math.round(p.w*scale),ph=Math.round(p.h*scale);
+        // 2px white gap around every piece — eliminates bleed between adjacent pieces
+        ctx.fillStyle='#f8f4ec';
+        ctx.fillRect(px,py,pw,ph);
+        // Solid opaque fill inset by 2px so neighbouring pieces never bleed
+        ctx.fillStyle=p.color+'e6'; // e6 = 90% opacity — solid, no see-through bleed
+        ctx.fillRect(px+2,py+2,Math.max(1,pw-4),Math.max(1,ph-4));
+        // Subtle dark inner border for clean separation
+        ctx.strokeStyle='rgba(0,0,0,0.18)';ctx.lineWidth=1;
+        ctx.strokeRect(px+2.5,py+2.5,Math.max(0,pw-5),Math.max(0,ph-5));
 
         if(ebOn&&ebThick>0&&p.partRef&&p.partRef.eb){
           const eb=p.rotated?{t:p.partRef.eb.l,b:p.partRef.eb.r,l:p.partRef.eb.b,r:p.partRef.eb.t}:p.partRef.eb;
           const strip=Math.max(4,ebThick*scale*8);
           ctx.fillStyle=ebColor+'dd';
-          if(eb.t)ctx.fillRect(px,py,pw,strip);
-          if(eb.b)ctx.fillRect(px,py+ph-strip,pw,strip);
-          if(eb.l)ctx.fillRect(px,py,strip,ph);
-          if(eb.r)ctx.fillRect(px+pw-strip,py,strip,ph);
+          if(eb.t)ctx.fillRect(px+2,py+2,pw-4,strip);
+          if(eb.b)ctx.fillRect(px+2,py+ph-2-strip,pw-4,strip);
+          if(eb.l)ctx.fillRect(px+2,py+2,strip,ph-4);
+          if(eb.r)ctx.fillRect(px+pw-2-strip,py+2,strip,ph-4);
           ctx.strokeStyle=ebColor;ctx.lineWidth=0.75;
-          if(eb.t){ctx.beginPath();ctx.moveTo(px,py+strip);ctx.lineTo(px+pw,py+strip);ctx.stroke();}
-          if(eb.b){ctx.beginPath();ctx.moveTo(px,py+ph-strip);ctx.lineTo(px+pw,py+ph-strip);ctx.stroke();}
-          if(eb.l){ctx.beginPath();ctx.moveTo(px+strip,py);ctx.lineTo(px+strip,py+ph);ctx.stroke();}
-          if(eb.r){ctx.beginPath();ctx.moveTo(px+pw-strip,py);ctx.lineTo(px+pw-strip,py+ph);ctx.stroke();}
+          if(eb.t){ctx.beginPath();ctx.moveTo(px+2,py+2+strip);ctx.lineTo(px+pw-2,py+2+strip);ctx.stroke();}
+          if(eb.b){ctx.beginPath();ctx.moveTo(px+2,py+ph-2-strip);ctx.lineTo(px+pw-2,py+ph-2-strip);ctx.stroke();}
+          if(eb.l){ctx.beginPath();ctx.moveTo(px+2+strip,py+2);ctx.lineTo(px+2+strip,py+ph-2);ctx.stroke();}
+          if(eb.r){ctx.beginPath();ctx.moveTo(px+pw-2-strip,py+2);ctx.lineTo(px+pw-2-strip,py+ph-2);ctx.stroke();}
         }
 
-        if(showLabels&&pw>22&&ph>12){
+        if(showLabels&&pw>26&&ph>14){
+          // Clip text strictly to piece interior — no overflow into neighbours
+          ctx.save();
+          ctx.beginPath();ctx.rect(px+3,py+3,Math.max(0,pw-6),Math.max(0,ph-6));ctx.clip();
           const fs=Math.min(11,pw/6,ph/3);
-          ctx.fillStyle='rgba(0,0,0,.82)';
+          ctx.fillStyle='rgba(0,0,0,.85)';
           ctx.font=`bold ${fs}px 'Barlow Condensed',sans-serif`;
           ctx.textAlign='center';ctx.textBaseline='middle';
           ctx.fillText(p.rotated?`↺ ${p.label}`:p.label,px+pw/2,py+ph/2);
-          if(ph>26&&fs>6){
+          if(ph>28&&fs>6){
             ctx.font=`${Math.min(9,pw/8,ph/5)}px 'DM Mono',monospace`;
-            ctx.fillStyle='rgba(0,0,0,.55)';
+            ctx.fillStyle='rgba(0,0,0,.50)';
             ctx.fillText(`${p.w}×${p.h}`,px+pw/2,py+ph/2+fs*1.1);
           }
+          ctx.restore();
         }
       });
+
+      ctx.restore(); // end sheet clip
 
       if(count>1){
         ctx.fillStyle='rgba(0,229,184,0.10)';
