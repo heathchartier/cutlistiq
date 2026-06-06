@@ -1279,14 +1279,8 @@ function optimize(){
   }
 
   function bestOpenSheet(part){
-    const partMax=Math.max(part.w,part.h);
     let best=null, bestScore=-1;
     openSheets.forEach((sheet,si)=>{
-      // Skip sheets that already have pieces with a very different primary dimension.
-      // Mixing e.g. 64" pieces with 48" pieces wastes the height gap between them.
-      if(sheet.placements.length>0){
-        const sheetMax=sheet.placements.reduce((m,p)=>Math.max(m,p.w,p.h),0);
-        if(Math.abs(partMax-sheetMax)>10) return;
       }
       const sim=cloneSheet(sheet);
       const r=tryPlace(sim,part,kerf,allowRotate,grainDir);
@@ -1340,14 +1334,11 @@ function optimize(){
     openSheets.push(ns);
 
     if(!madeProgress){
-      // Only place a piece whose primary dimension matches the first piece in the queue.
-      // This prevents e.g. a 48" piece from landing on a sheet opened for 64" pieces.
-      const firstMax=remaining.length>0?Math.max(remaining[0].w,remaining[0].h):0;
+      // When stuck, open a new sheet and place the first piece that fits
       let placedOne=false;
       const next=[];
       for(const part of remaining){
-        const partMax=Math.max(part.w,part.h);
-        if(!placedOne&&Math.abs(partMax-firstMax)<=10){
+        if(!placedOne){
           const r=tryPlace(ns,part,kerf,allowRotate,grainDir);
           if(r){
             ns.placements.push(r);
