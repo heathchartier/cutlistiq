@@ -1276,9 +1276,12 @@ function runOptimizerGroup(groupParts, groupStocks, kerf, allowRotate, grainDir,
   groupParts.forEach(p=>{
     for(let q=0;q<p.qty;q++) remaining.push({...p,id:remaining.length,eb:{...p.eb}});
   });
+  // Sort by narrower dimension (width) descending — wide pieces first so their strips
+  // are available for narrow filler pieces, instead of all fillers clustering on early sheets.
+  // Within the same width group, sort by area descending.
   remaining.sort((a,b)=>{
-    const maxA=Math.max(a.w,a.h),maxB=Math.max(b.w,b.h);
-    if(maxA!==maxB) return maxB-maxA;
+    const minA=Math.min(a.w,a.h),minB=Math.min(b.w,b.h);
+    if(Math.abs(minA-minB)>0.5) return minB-minA;
     return b.w*b.h-a.w*a.h;
   });
 
