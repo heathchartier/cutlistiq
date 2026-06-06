@@ -1683,6 +1683,21 @@ function renderResults(){
 function card(val,label){return`<div class="summary-card"><div class="summary-value">${val}</div><div class="summary-label">${label}</div></div>`;}
 function cardColored(val,color,label){return`<div class="summary-card" style="border-color:${color}"><div class="summary-value" style="color:${color}">${val}</div><div class="summary-label">${label}</div></div>`;}
 
+// ── SAMPLE (first-visit onboarding) ───────────────────────────────────────────
+function loadSample(){
+  addStock(49,97,3,'3/4 Maple Plywood');
+  [
+    ['Side Panel',   12,     30,     4, true],
+    ['Bottom Panel', 22.5,   12,     2, true],
+    ['Top Panel',    22.5,   12,     2, true],
+    ['Adj. Shelf',   22.375, 10,     2, true],
+    ['Door',         24.875, 30.875, 2, true],
+  ].forEach(([label,w,h,qty,rotate])=>addPart(label,w,h,qty,rotate));
+  const pn=document.getElementById('proj-name');
+  if(pn) pn.value='Sample — Upper Cabinets (24W × 30H × 12D)';
+  showSaveStatus('Sample loaded — hit ▶ Optimize to see it in action!');
+}
+
 // ── DEMO ──────────────────────────────────────────────────────────────────────
 function loadDemo(){
   stocks=[];parts=[];
@@ -1796,9 +1811,16 @@ function loadSavedState(){
 // ── INIT ──────────────────────────────────────────────────────────────────────
 const restored=loadSavedState();
 // Don't apply promo on init — wait for Supabase to confirm sign-in first
-if(!restored) setMode('quick');
-if(stocks.length===0){addStock();addStock();}
-if(parts.length===0){addPart();addPart();addPart();addPart();}
+if(!restored){
+  setMode('quick');
+  if(!localStorage.getItem('cutlistiq_visited')){
+    localStorage.setItem('cutlistiq_visited','1');
+    loadSample();
+  } else {
+    if(stocks.length===0){addStock();addStock();}
+    if(parts.length===0){addPart();addPart();addPart();addPart();}
+  }
+}
 updateUsagePill();
 initSplitResize();
 initColResize();
