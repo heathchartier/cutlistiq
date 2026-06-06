@@ -1279,16 +1279,19 @@ function optimize(){
   }
 
   function bestOpenSheet(part){
-    let best=null, bestScore=-1;
+    // Fast path: check if any free rect fits the piece (no full simulation).
+    // Score by existing utilisation — highest-filled sheet wins.
+    // This is O(sheets × freeRects) vs the old O(sheets × pieces × freeRects²).
+    const orients=[[part.w,part.h]];
+    if(allowRotate&&!grainDir&&part.rotate) orients.push([part.h,part.w]);
+    let best=null,bestScore=-1;
     openSheets.forEach((sheet,si)=>{
-      }
-      const sim=cloneSheet(sheet);
-      const r=tryPlace(sim,part,kerf,allowRotate,grainDir);
-      if(r){
-        const used=sim.placements.reduce((a,p)=>a+p.w*p.h,0)+r.w*r.h;
-        const score=used/(sheet.w*sheet.h);
-        if(score>bestScore){bestScore=score;best={si,score};}
-      }
+      const fits=orients.some(([pw,ph])=>
+        sheet.freeRects.some(r=>pw<=r.w+0.001&&ph<=r.h+0.001));
+      if(!fits) return;
+      const used=sheet.placements.reduce((a,p)=>a+p.w*p.h,0);
+      const score=used/(sheet.w*sheet.h);
+      if(score>bestScore){bestScore=score;best={si,score};}
     });
     return best;
   }
