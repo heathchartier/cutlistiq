@@ -53,23 +53,35 @@ export async function onRequestPost({ request, env }) {
 
   const prompt = `You are analyzing a cut list for sheet materials (plywood, MDF, melamine, etc.).
 
-Extract every part/cut from this image and return ONLY a JSON array — no explanation, no markdown, just the raw JSON.
+Extract the job name and every part from this image. Return ONLY a JSON object — no explanation, no markdown, just raw JSON.
 
-Each item in the array should have:
-- "label": part name or description (string, use "Part" + number if unlabeled)
-- "w": the SHORTER dimension as a number in inches (width across the grain)
-- "h": the LONGER dimension as a number in inches (length with the grain)
+Return exactly this structure:
+{"jobName":"","parts":[...],"stocks":[...]}
+
+jobName: look for a "JOB NAME:", "JOB:", or "PROJECT:" field near the top of the document. Use empty string if not found.
+
+Each part object:
+- "label": part name or description (use "Part" + number if unlabeled)
+- "w": the SHORTER dimension as a number in inches
+- "h": the LONGER dimension as a number in inches
 - "qty": quantity as a number (default 1 if not shown)
-- "mat": material type if visible (string, omit if not shown)
+- "mat": material type — CRITICAL: if a row's material column is blank, carry forward the last seen material value from above. Every part must have a mat value if any material appears anywhere in the list.
+
+For stocks, generate one entry per unique material found in parts:
+- "w": always 49
+- "h": smallest standard height fitting that material's tallest part: 97 (≤96"), 121 (≤120"), 145 (≤144"), 193 (≤192")
+- "qty": 50
+- "mat": same material string as the parts
+- "label": same as mat
 
 Rules:
-- Always put the smaller number in "w" and the larger number in "h"
-- Convert fractions to decimals (e.g. 23-1/2 → 23.5, 18-1/4 → 18.25, 19-3/4 → 19.75, 64-1/8 → 64.125)
+- Always put the smaller number in "w" and the larger in "h"
+- Convert fractions to decimals: 16-3/8 → 16.375, 31-1/4 → 31.25, 15-5/8 → 15.625, 47-1/2 → 47.5
 - If the list shows feet, convert to inches (multiply by 12)
-- Ignore header rows, totals, thickness notes, material descriptions
-- If you cannot find any valid cut dimensions, return []
+- Ignore header rows, totals, thickness notes
+- If no valid dimensions found, return {"jobName":"","parts":[],"stocks":[]}
 
-Example output: [{"label":"Side Panel","w":23.5,"h":47.75,"qty":2,"mat":"3/4 Plywood"},{"label":"Shelf","w":22,"h":18,"qty":4}]`;
+Example: {"jobName":"Kings Display","parts":[{"label":"Side Panel","w":23.5,"h":47.75,"qty":2,"mat":"WF392"},{"label":"Shelf","w":22,"h":18,"qty":4,"mat":"WF392"}],"stocks":[{"w":49,"h":97,"qty":50,"mat":"WF392","label":"WF392"}]}`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -104,13 +116,16 @@ Example output: [{"label":"Side Panel","w":23.5,"h":47.75,"qty":2,"mat":"3/4 Ply
     const data = await response.json();
     const text = (data.content?.[0]?.text || '').trim();
 
-    const match = text.match(/\[[\s\S]*\]/);
+    const match = text.match(/\{[\s\S]*\}/);
     if (!match) {
       return new Response(JSON.stringify({ error: 'No cut list found in image', raw: text }), { status: 422, headers });
     }
 
-    const parts = JSON.parse(match[0]);
-    return new Response(JSON.stringify({ parts }), { status: 200, headers });
+    const parsed = JSON.parse(match[0]);
+    const parts = Array.isArray(parsed.parts) ? parsed.parts : [];
+    const stocks = Array.isArray(parsed.stocks) ? parsed.stocks : [];
+    const jobName = typeof parsed.jobName === 'string' ? parsed.jobName : '';
+    return new Response(JSON.stringify({ parts, stocks, jobName }), { status: 200, headers });
 
   } catch (err) {
     console.error('Function error:', err);

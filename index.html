@@ -1031,6 +1031,8 @@ let appMode   = 'quick'; // always start quick — applyAuthMode() sets pro afte
 let stockCosts= [];
 let saveTimer = null;
 let importPending = [];
+let importPendingStocks = [];
+let importPendingJobName = '';
 let sheetRows     = [];
 const FREE_LIMIT  = 5;
 const SAVE_VERSION= 2;
@@ -2560,7 +2562,7 @@ function renderAIInsights(insights){
 // ── IMPORT MODAL ──────────────────────────────────────────────────────────────
 function openImport(){
   document.getElementById('import-modal').classList.add('open');
-  importPending=[];
+  importPending=[];importPendingStocks=[];importPendingJobName='';
   document.getElementById('import-confirm').disabled=true;
   switchImportTab('sheet');
   // reset sheet tab
@@ -2587,7 +2589,7 @@ function switchImportTab(tab){
   document.getElementById('ipanel-photo').style.display=tab==='photo'?'':'none';
   document.getElementById('itab-sheet').classList.toggle('active',tab==='sheet');
   document.getElementById('itab-photo').classList.toggle('active',tab==='photo');
-  importPending=[];
+  importPending=[];importPendingStocks=[];importPendingJobName='';
   document.getElementById('import-confirm').disabled=true;
 }
 
@@ -3183,12 +3185,20 @@ function handlePhotoFile(file){
         return;
       }
 
+      importPendingJobName=data.jobName||'';
+      importPendingStocks=(data.stocks||[])
+        .map(s=>({w:+s.w||49,h:+s.h||97,qty:Math.max(1,Math.round(+s.qty||50)),label:s.label||s.mat||'Sheet Material',mat:s.mat||''}))
+        .filter(s=>s.w>0&&s.h>0);
+
       document.getElementById('import-confirm').disabled=false;
       setStatus('photo-status','ok',`AI found ${importPending.length} parts. Review below, then click Import Parts.`);
 
       const show=importPending.slice(0,8);
       const more=importPending.length-show.length;
+      const jobLine=importPendingJobName?`<div style="font-size:.78rem;color:#cdd1d6;margin-bottom:8px">Job: <strong style="color:#fff">${importPendingJobName}</strong></div>`:'';
+      const stockLine=importPendingStocks.length?`<div style="font-size:.76rem;color:#9aa3ad;margin-bottom:10px">Stock sheets detected: ${importPendingStocks.map(s=>`${s.mat||s.label} 49×${s.h}`).join(', ')}</div>`:'';
       document.getElementById('photo-preview').innerHTML=`
+        ${jobLine}${stockLine}
         <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#00e5b8;margin:14px 0 6px">AI Extracted — ${importPending.length} parts</div>
         <table><thead><tr><th>Label</th><th>Width</th><th>Length</th><th>Qty</th><th>Material</th></tr></thead>
         <tbody>
@@ -3210,16 +3220,27 @@ function confirmImport(){
   // Clear blank placeholder rows before importing so empty starters don't linger
   parts  = parts.filter(p=>p.w>0&&p.h>0&&p.qty>0);
   stocks = stocks.filter(s=>s.w>0&&s.h>0&&s.qty>0);
-  importPending.forEach(p=>addPart(p.label,p.w,p.h,p.qty,true,{t:false,b:false,l:false,r:false}));
+  importPending.forEach(p=>addPart(p.label,p.w,p.h,p.qty,true,{t:false,b:false,l:false,r:false},p.mat));
+  // Add AI-suggested stocks (skip duplicates by mat+w+h)
+  importPendingStocks.forEach(s=>{
+    const dup=stocks.some(ex=>ex.w===s.w&&ex.h===s.h&&ex.mat===s.mat);
+    if(!dup)addStock(s.w,s.h,s.qty,s.mat||s.label);
+  });
   // Add a default stock sheet if none exist after the clean-up
   if(!stocks.filter(s=>s.w>0&&s.h>0&&s.qty>0).length){
     addStock(49,97,200,'Sheet Material');
   }
   renderStocks();
+  if(importPendingJobName){
+    const pn=document.getElementById('proj-name');
+    if(pn&&!pn.value)pn.value=importPendingJobName;
+  }
   closeImport();
   schedSave();
   showSaveStatus(`${count} parts imported ✓`);
   importPending=[];
+  importPendingStocks=[];
+  importPendingJobName='';
 }
 </script>
 
