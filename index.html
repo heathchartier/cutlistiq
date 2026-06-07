@@ -779,6 +779,7 @@ body.print-summary .print-header{display:block!important}
         <div class="cab-opts-grid">
           <div class="field"><label># Drawers</label><input type="number" id="cab-drawers" placeholder="3" min="1" max="6" step="1" oninput="updateCabPreview()"></div>
           <div class="field"><label>Slide Clearance (in)</label><input type="number" id="cab-slide-clr" placeholder="1" min="0.5" max="3" step="0.25" oninput="updateCabPreview()"></div>
+          <div class="field"><label>Box Side Thickness</label><select id="cab-drw-box-t" onchange="updateCabPreview()"><option value="0.5" selected>1/2"</option><option value="0.625">5/8"</option><option value="0.75">3/4"</option></select></div>
           <div class="field"><label>Drawer Box Material</label><input type="text" id="cab-drw-mat" placeholder="Same as box" oninput="updateCabPreview()"></div>
         </div>
       </div>
@@ -2650,7 +2651,7 @@ function updateCabVisibility(){
 
 function getCabParts(type,W,H,D,T,shelves,cabQty,matLabel,opts){
   const {prefix='',construction='frameless',toeKick='none',toeKickH=3.5,
-         doors=0,doorOverlay=0.5,doorMat='',drawerCount=3,slideClr=1,drawerMat='',
+         doors=0,doorOverlay=0.5,doorMat='',drawerCount=3,slideClr=1,drawerBoxT=0.5,drawerMat='',
          ffStileW=1.5,ffTopRail=2,ffBotRail=2.5,ffMat=''}=opts||{};
 
   const mat=matLabel||'';
@@ -2744,7 +2745,7 @@ function getCabParts(type,W,H,D,T,shelves,cabQty,matLabel,opts){
       const n=i+1;
       p.push(part(`Drw${n} Frnt/Back`,boxW,bh,2,dM));
       p.push(part(`Drw${n} Side`,boxD,bh,2,dM));
-      p.push(part(`Drw${n} Bottom`,r(boxW+T-0.25),r(boxD+T-0.25),1,backMat));
+      p.push(part(`Drw${n} Bottom`,r(boxW+drawerBoxT-0.25),r(boxD+drawerBoxT-0.25),1,backMat));
     });
   }
 
@@ -2762,6 +2763,7 @@ function getCabOpts(){
     doorMat:(document.getElementById('cab-door-mat')?.value||'').trim(),
     drawerCount:+document.getElementById('cab-drawers')?.value||3,
     slideClr:+document.getElementById('cab-slide-clr')?.value||1,
+    drawerBoxT:+document.getElementById('cab-drw-box-t')?.value||0.5,
     drawerMat:(document.getElementById('cab-drw-mat')?.value||'').trim(),
     ffStileW:+document.getElementById('cab-ff-stile')?.value||1.5,
     ffTopRail:+document.getElementById('cab-ff-top')?.value||2,
