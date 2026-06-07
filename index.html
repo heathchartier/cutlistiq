@@ -2719,12 +2719,12 @@ function getCabParts(type,W,H,D,T,shelves,cabQty,matLabel,opts){
       const openH=H-ffTopRail-ffBotRail;
       if(doorOverlay>0){
         const totalW=openW+doorOverlay*2;
-        const doorW=doors===2?(totalW-0.125)/2:totalW-0.0625;
-        const doorH=openH+doorOverlay*2-0.0625;
+        const doorW=doors===2?(totalW-0.125)/2:totalW-0.125;
+        const doorH=openH+doorOverlay*2-0.125;
         p.push(part('Door',r(doorW),r(doorH),doors,dM));
       } else {
-        const doorW=doors===2?(openW-ffStileW)/2-0.0625:openW-0.0625;
-        const doorH=openH-0.0625;
+        const doorW=doors===2?(openW-ffStileW)/2-0.125:openW-0.125;
+        const doorH=openH-0.125;
         p.push(part('Door',r(doorW),r(doorH),doors,dM));
       }
     }
