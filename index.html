@@ -1333,10 +1333,12 @@ function runOptimizerGroup(groupParts, groupStocks, kerf, allowRotate, grainDir,
   groupParts.forEach(p=>{
     for(let q=0;q<p.qty;q++) remaining.push({...p,id:remaining.length,eb:{...p.eb}});
   });
-  // Sort by narrower dimension (width) descending — wide pieces first so their strips
-  // are available for narrow filler pieces, instead of all fillers clustering on early sheets.
-  // Within the same width group, sort by area descending.
+  // Sort by longest dimension descending first — groups all tall/wide pieces together so they
+  // fill each other's strips (e.g. 32×96 opens a 16.8"×97" strip that 16.375×96 fills perfectly).
+  // Within the same long-dimension group, sort by shorter dimension descending, then area.
   remaining.sort((a,b)=>{
+    const maxA=Math.max(a.w,a.h),maxB=Math.max(b.w,b.h);
+    if(Math.abs(maxA-maxB)>0.5) return maxB-maxA;
     const minA=Math.min(a.w,a.h),minB=Math.min(b.w,b.h);
     if(Math.abs(minA-minB)>0.5) return minB-minA;
     return b.w*b.h-a.w*a.h;
