@@ -538,15 +538,15 @@ body.print-summary .print-header{display:block!important}
 
   <label style="margin-bottom:6px">Optimization Method</label>
   <div class="opt-selector">
-    <div class="opt-card active" id="opt-nested" onclick="selectOpt('nested')">
-      <div class="opt-card-icon">🧩</div>
-      <div class="opt-card-title">Nested</div>
-      <div class="opt-card-desc">Best fit packing</div>
-    </div>
-    <div class="opt-card" id="opt-guillotine" onclick="selectOpt('guillotine')">
+    <div class="opt-card active" id="opt-guillotine" onclick="selectOpt('guillotine')">
       <div class="opt-card-icon">🔪</div>
-      <div class="opt-card-title">Guillotine</div>
-      <div class="opt-card-desc">Panel saw style</div>
+      <div class="opt-card-title">Panel Saw</div>
+      <div class="opt-card-desc">Straight cuts, panel saw ready</div>
+    </div>
+    <div class="opt-card" id="opt-nested" onclick="selectOpt('nested')">
+      <div class="opt-card-icon">🧩</div>
+      <div class="opt-card-title">Best Fit</div>
+      <div class="opt-card-desc">Min waste, CNC / nesting table</div>
     </div>
   </div>
 
@@ -1055,7 +1055,7 @@ const SUPABASE_URL='https://oaxkcsnmiozpnnhlmkmi.supabase.co';
 const SUPABASE_KEY='sb_publishable_j6iNpqB7GVx-os2XMWJs7A_eFUC9r_P';
 let stocks    = [];
 let parts     = [];
-let optMethod = 'nested';
+let optMethod = 'guillotine';
 let results   = null;
 let appMode   = 'quick'; // always start quick — applyAuthMode() sets pro after auth check
 let stockCosts= [];
@@ -1892,7 +1892,7 @@ function loadSavedState(){
     stocks=(s.stocks||[]).map(s=>({sq:null,...s}));
     parts=(s.parts||[]).map(p=>({mat:'',...p}));
     stockCosts=s.stockCosts||[];
-    optMethod=s.optMethod||'nested';
+    optMethod=s.optMethod||'guillotine';
     // appMode is NOT restored from saved state — applyAuthMode() controls it after auth loads
     selectOpt(optMethod);
     // Restore settings after DOM ready
