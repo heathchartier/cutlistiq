@@ -76,7 +76,13 @@ For stocks, generate one entry per unique material found in parts:
 
 Rules:
 - CRITICAL: Preserve the user's width/length as written. A 23½ × 6½ part must stay w:23.5, h:6.5 — never swap dimensions to make w the smaller number. The user wrote it that way intentionally.
+- CRITICAL: Read each row's WIDTH and LENGTH independently from the actual cells in that row. NEVER carry forward or assume the width/length from a previous row. Each row must be read on its own.
 - Convert fractions to decimals: 16-3/8 → 16.375, 31-1/4 → 31.25, 15-5/8 → 15.625, 47-1/2 → 47.5
+- FRACTION CARE — these pairs look similar in handwriting, read the numerator carefully:
+  ⅛ (one-eighth) = 0.125  vs  ⅞ (seven-eighths) = 0.875
+  ¼ (one-quarter) = 0.25  vs  ¾ (three-quarters) = 0.75
+  ⅓ (one-third)   = 0.333 vs  ⅔ (two-thirds)     = 0.667
+- SANITY CHECK: cabinet shop parts are rarely under 4" in any dimension. If you read a dimension under 4", re-examine that cell — it is likely a misread fraction or blurred digit.
 - If the list shows feet, convert to inches (multiply by 12)
 - Ignore header rows, totals, thickness notes
 - If no valid dimensions found, return {"jobName":"","parts":[],"stocks":[]}
