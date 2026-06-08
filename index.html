@@ -1228,15 +1228,32 @@ function tryPlace(sheet,part,kerf,allowRotate,grainDir){
     :placeNested(sheet,part,kerf,allowRotate,grainDir);
 }
 
+// Score a guillotine split: higher = better (leaves more usable area for future pieces).
+// Tries both split directions and returns the score of the best one.
+function guillotineSplitScore(rW,tH,pw,ph,rectH){
+  // Split A: horizontal bottom (pw×tH) + vertical right (rW×rectH)
+  const scoreA=Math.max(pw*tH,rW*rectH);
+  // Split B: vertical right (rW×ph) + horizontal bottom full-width ((rW+pw+kerf)×tH)
+  // Note: full rect width = pw+rW+kerf, full rect height = ph+tH+kerf
+  const fullW=pw+rW, fullH=ph+tH; // kerf already baked in as rW/tH already exclude it
+  const scoreB=Math.max(rW*ph,fullW*tH);
+  return Math.max(scoreA,scoreB);
+}
+
 function placeGuillotine(sheet,part,kerf,allowRotate,grainDir){
-  let best=null,bestScore=Infinity;
+  let best=null,bestWaste=Infinity,bestSplit=-1;
   const orients=[[part.w,part.h,false]];
   if(allowRotate&&!grainDir&&part.rotate) orients.push([part.h,part.w,true]);
   for(const[pw,ph,rotated]of orients){
     for(const rect of sheet.freeRects){
       if(pw<=rect.w+0.001&&ph<=rect.h+0.001){
-        const score=rect.w*rect.h-pw*ph;
-        if(score<bestScore){bestScore=score;best={x:rect.x,y:rect.y,w:pw,h:ph,rect,rotated};}
+        const waste=rect.w*rect.h-pw*ph;
+        // Tiebreak by best-split quality (higher = better, so negate for comparison)
+        const splitSc=guillotineSplitScore(rect.w-pw-kerf,rect.h-ph-kerf,pw,ph,rect.h);
+        if(waste<bestWaste||(waste===bestWaste&&splitSc>bestSplit)){
+          bestWaste=waste;bestSplit=splitSc;
+          best={x:rect.x,y:rect.y,w:pw,h:ph,rect,rotated};
+        }
       }
     }
   }
@@ -1244,12 +1261,17 @@ function placeGuillotine(sheet,part,kerf,allowRotate,grainDir){
   const{rect,w:pw,h:ph}=best;
   const rW=rect.w-pw-kerf,tH=rect.h-ph-kerf;
   sheet.freeRects.splice(sheet.freeRects.indexOf(rect),1);
-  if(rW>tH){
-    if(tH>0.01)  sheet.freeRects.push({x:rect.x,      y:rect.y+ph+kerf,w:pw,  h:tH    });
-    if(rW>0.01)  sheet.freeRects.push({x:rect.x+pw+kerf,y:rect.y,      w:rW,  h:rect.h});
+  // Evaluate both split directions, pick the one that leaves the largest usable rect
+  const scoreA=Math.max(pw*tH,rW*rect.h);         // Split A: bottom narrow + right full-height
+  const scoreB=Math.max(rW*ph,(pw+rW)*tH);         // Split B: right narrow + bottom full-width
+  if(scoreA>=scoreB){
+    // Split A: horizontal cut below piece first, then vertical cut to the right
+    if(tH>0.01) sheet.freeRects.push({x:rect.x,      y:rect.y+ph+kerf,w:pw,      h:tH    });
+    if(rW>0.01) sheet.freeRects.push({x:rect.x+pw+kerf,y:rect.y,      w:rW,      h:rect.h});
   }else{
-    if(rW>0.01)  sheet.freeRects.push({x:rect.x+pw+kerf,y:rect.y,      w:rW,  h:ph    });
-    if(tH>0.01)  sheet.freeRects.push({x:rect.x,      y:rect.y+ph+kerf,w:rect.w,h:tH  });
+    // Split B: vertical cut to right of piece first, then horizontal cut below
+    if(rW>0.01) sheet.freeRects.push({x:rect.x+pw+kerf,y:rect.y,      w:rW,      h:ph    });
+    if(tH>0.01) sheet.freeRects.push({x:rect.x,        y:rect.y+ph+kerf,w:rect.w,h:tH    });
   }
   return{x:best.x,y:best.y,w:pw,h:ph,label:part.label,color:part.color,rotated:best.rotated,partRef:part};
 }
