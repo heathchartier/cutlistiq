@@ -1248,9 +1248,13 @@ function placeGuillotine(sheet,part,kerf,allowRotate,grainDir){
     for(const rect of sheet.freeRects){
       if(pw<=rect.w+0.001&&ph<=rect.h+0.001){
         const waste=rect.w*rect.h-pw*ph;
-        // Tiebreak by best-split quality (higher = better, so negate for comparison)
+        // Tiebreak by best-split quality. Rotated orientation must score >1% better
+        // than non-rotated to win — prevents marginal rotation from choosing a
+        // sub-optimal packing grid (e.g. 3-per-row horizontal instead of 42-per-row
+        // vertical for thin parts like 0.9375×12 brackets).
         const splitSc=guillotineSplitScore(rect.w-pw-kerf,rect.h-ph-kerf,pw,ph,rect.h);
-        if(waste<bestWaste||(waste===bestWaste&&splitSc>bestSplit)){
+        const rotPenalty=rotated?1.01:1.0;
+        if(waste<bestWaste||(waste===bestWaste&&splitSc>bestSplit*rotPenalty)){
           bestWaste=waste;bestSplit=splitSc;
           best={x:rect.x,y:rect.y,w:pw,h:ph,rect,rotated};
         }
