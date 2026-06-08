@@ -62,20 +62,20 @@ jobName: look for a "JOB NAME:", "JOB:", or "PROJECT:" field near the top of the
 
 Each part object:
 - "label": part name or description (use "Part" + number if unlabeled)
-- "w": the SHORTER dimension as a number in inches
-- "h": the LONGER dimension as a number in inches
+- "w": the WIDTH as written in the document (preserve the user's column — do NOT swap based on which number is smaller)
+- "h": the LENGTH as written in the document (preserve the user's column — do NOT swap based on which number is larger)
 - "qty": quantity as a number (default 1 if not shown)
 - "mat": material type — CRITICAL: if a row's material column is blank, carry forward the last seen material value from above. Every part must have a mat value if any material appears anywhere in the list.
 
 For stocks, generate one entry per unique material found in parts:
 - "w": always 49
-- "h": smallest standard height fitting that material's tallest part: 97 (≤96"), 121 (≤120"), 145 (≤144"), 193 (≤192")
+- "h": smallest standard height fitting that material's largest dimension: 97 (≤96"), 121 (≤120"), 145 (≤144"), 193 (≤192")
 - "qty": 50
 - "mat": same material string as the parts
 - "label": same as mat
 
 Rules:
-- Always put the smaller number in "w" and the larger in "h"
+- CRITICAL: Preserve the user's width/length as written. A 23½ × 6½ part must stay w:23.5, h:6.5 — never swap dimensions to make w the smaller number. The user wrote it that way intentionally.
 - Convert fractions to decimals: 16-3/8 → 16.375, 31-1/4 → 31.25, 15-5/8 → 15.625, 47-1/2 → 47.5
 - If the list shows feet, convert to inches (multiply by 12)
 - Ignore header rows, totals, thickness notes
