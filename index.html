@@ -306,6 +306,13 @@ canvas.sheet-canvas{display:block;border:1px solid #3a4149;border-radius:2px;bac
 
 /* ── Pro Label ── */
 .pro-label{font-size:.58rem;font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:.1em;color:#f7b731;text-transform:uppercase;background:#2a2200;border:1px solid #f7b731;border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle;line-height:1}
+/* ── Offcut Inventory ── */
+.inv-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#23282e;border:1px solid #2e3540;border-radius:4px;margin-bottom:5px;gap:6px}
+.inv-item-info{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.inv-item-label{font-size:.78rem;color:#e8ecf0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inv-item-dim{font-size:.72rem;color:#9aa3ad;font-family:'DM Mono',monospace}
+.inv-item-actions{display:flex;gap:4px;flex-shrink:0}
+.inv-empty{font-size:.74rem;color:#5a6472;text-align:center;padding:12px 0;line-height:1.6}
 /* ── Estimate section ── */
 .est-row{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-size:.8rem;border-radius:3px;margin-bottom:2px;color:#9aa3ad}
 .est-row:nth-child(odd){background:#0f1112}
@@ -463,6 +470,28 @@ body.print-summary .print-header{display:block!important}
     <tbody id="stock-body"></tbody>
   </table>
   </div>
+</div>
+
+<!-- OFFCUT INVENTORY (Shop Pro) -->
+<div class="section" id="offcut-inventory-section" style="display:none">
+  <div class="section-title">
+    Offcut Inventory <span class="pro-label">PRO</span>
+    <button class="btn btn-sm" onclick="toggleInventoryAdd()">+ Add</button>
+  </div>
+  <div id="inventory-add-form" style="display:none;margin-bottom:12px">
+    <div class="cab-opts-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:6px">
+      <div class="field"><label>Width (in)</label><input type="number" id="inv-w" placeholder="24" min="1" step="0.125"></div>
+      <div class="field"><label>Height (in)</label><input type="number" id="inv-h" placeholder="48" min="1" step="0.125"></div>
+      <div class="field"><label>Qty</label><input type="number" id="inv-qty" placeholder="1" min="1" step="1"></div>
+    </div>
+    <div class="cab-opts-grid" style="grid-template-columns:1fr 1fr;margin-bottom:8px">
+      <div class="field"><label>Material</label><input type="text" id="inv-mat" placeholder="WF392"></div>
+      <div class="field"><label>Label (optional)</label><input type="text" id="inv-label" placeholder="Shop offcut"></div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="saveInventoryFromForm()">Save to Inventory</button>
+    <button class="btn btn-sm" onclick="toggleInventoryAdd()" style="margin-left:4px">Cancel</button>
+  </div>
+  <div id="inventory-list"></div>
 </div>
 
 <!-- PARTS -->
@@ -1034,6 +1063,8 @@ let saveTimer = null;
 let importPending = [];
 let importPendingStocks = [];
 let importPendingJobName = '';
+let inventory = [];
+const INVENTORY_KEY = 'cutlistiq_inventory';
 let sheetRows     = [];
 const FREE_LIMIT  = 5;
 const SAVE_VERSION= 2;
@@ -1072,6 +1103,7 @@ function renderStocks(){
       <td><input type="text" value="${s.mat}" placeholder="${MAT_HINTS[i%MAT_HINTS.length]}"
         onchange="stocks[${i}].mat=this.value;schedSave();if(appMode==='pro')renderCostInputs()"></td>
       ${sqCell}
+      ${appMode==='pro'?`<td><button class="del-btn" title="Save to inventory" style="color:#00e5b8;font-size:.85rem" onclick="const s=stocks[${i}];if(s.w&&s.h)addToInventory(s.w,s.h,s.mat||'',s.mat||'',s.qty||1)">💾</button></td>`:''}
       <td><button class="del-btn" onclick="stocks.splice(${i},1);renderStocks();if(appMode==='pro')renderCostInputs()">✕</button></td>`;
     tb.appendChild(tr);
   });
@@ -1896,6 +1928,7 @@ function loadSavedState(){
   }catch(e){return false;}
 }
 // ── INIT ──────────────────────────────────────────────────────────────────────
+loadInventory();
 const restored=loadSavedState();
 // Don't apply promo on init — wait for Supabase to confirm sign-in first
 if(!restored){
@@ -1939,11 +1972,11 @@ function setMode(mode){
   document.getElementById('mode-quick').classList.toggle('active',mode==='quick');
   document.getElementById('mode-pro').classList.toggle('active',mode==='pro');
   // Show/hide pro-only sidebar sections
-  ['pro-saved-projects','pro-project','pro-costs','pro-estimate'].forEach(id=>{
+  ['pro-saved-projects','pro-project','pro-costs','pro-estimate','offcut-inventory-section'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.style.display=mode==='pro'?'':'none';
   });
-  if(mode==='pro') renderProjectsList();
+  if(mode==='pro'){renderProjectsList();renderInventory();}
 
   // Cabinet Builder tab — Pro only, always visible in Pro mode
   const lumberTab=document.getElementById('tab-btn-lumber');
@@ -2558,6 +2591,72 @@ function renderAIInsights(insights){
       </div>`).join('')}
     </div>
   </div>`;
+}
+
+// ── OFFCUT INVENTORY ──────────────────────────────────────────────────────────
+function loadInventory(){
+  try{ inventory=JSON.parse(localStorage.getItem(INVENTORY_KEY)||'[]'); }
+  catch{ inventory=[]; }
+  renderInventory();
+}
+function saveInventoryData(){
+  localStorage.setItem(INVENTORY_KEY,JSON.stringify(inventory));
+}
+function toggleInventoryAdd(){
+  const form=document.getElementById('inventory-add-form');
+  if(!form) return;
+  const showing=form.style.display!=='none';
+  form.style.display=showing?'none':'';
+  if(!showing) document.getElementById('inv-w')?.focus();
+}
+function saveInventoryFromForm(){
+  const w=+document.getElementById('inv-w')?.value||0;
+  const h=+document.getElementById('inv-h')?.value||0;
+  const qty=+document.getElementById('inv-qty')?.value||1;
+  const mat=(document.getElementById('inv-mat')?.value||'').trim();
+  const label=(document.getElementById('inv-label')?.value||'').trim();
+  if(!w||!h){alert('Enter width and height.');return;}
+  addToInventory(w,h,mat,label,qty);
+  ['inv-w','inv-h','inv-mat','inv-label'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('inv-qty').value='1';
+  document.getElementById('inventory-add-form').style.display='none';
+}
+function addToInventory(w,h,mat,label,qty){
+  const id=Date.now().toString(36)+Math.random().toString(36).substr(2,5);
+  inventory.unshift({id,label:label||mat||'Offcut',mat:mat||'',w,h,qty:qty||1,added:new Date().toLocaleDateString()});
+  saveInventoryData();
+  renderInventory();
+  showSaveStatus('Saved to inventory ✓');
+}
+function removeFromInventory(id){
+  inventory=inventory.filter(i=>i.id!==id);
+  saveInventoryData();
+  renderInventory();
+}
+function addInventoryToJob(id){
+  const item=inventory.find(i=>i.id===id);
+  if(!item) return;
+  addStock(item.w,item.h,item.qty,item.mat||item.label);
+  showSaveStatus(`${item.label||item.mat||'Offcut'} added to job ✓`);
+}
+function renderInventory(){
+  const container=document.getElementById('inventory-list');
+  if(!container) return;
+  if(!inventory.length){
+    container.innerHTML='<div class="inv-empty">No saved pieces yet.<br>Click 💾 next to any stock sheet to save it,<br>or use + Add above.</div>';
+    return;
+  }
+  container.innerHTML=inventory.map(item=>`
+    <div class="inv-item">
+      <div class="inv-item-info">
+        <span class="inv-item-label">${item.label||item.mat||'Offcut'}</span>
+        <span class="inv-item-dim">${item.w}" × ${item.h}"&nbsp;·&nbsp;qty ${item.qty}${item.mat?' · '+item.mat:''}</span>
+      </div>
+      <div class="inv-item-actions">
+        <button class="btn btn-sm" onclick="addInventoryToJob('${item.id}')" title="Add to current job">+ Job</button>
+        <button class="btn btn-sm" style="color:#9aa3ad;min-width:24px" onclick="removeFromInventory('${item.id}')" title="Remove from inventory">✕</button>
+      </div>
+    </div>`).join('');
 }
 
 // ── IMPORT MODAL ──────────────────────────────────────────────────────────────
