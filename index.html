@@ -1253,7 +1253,7 @@ function placeGuillotine(sheet,part,kerf,allowRotate,grainDir){
         // sub-optimal packing grid (e.g. 3-per-row horizontal instead of 42-per-row
         // vertical for thin parts like 0.9375×12 brackets).
         const splitSc=guillotineSplitScore(rect.w-pw-kerf,rect.h-ph-kerf,pw,ph,rect.h);
-        const rotPenalty=rotated?1.08:1.0; // rotation must be 8%+ better to override non-rotated
+        const rotPenalty=rotated?1.10:1.0; // rotation must be 10%+ better to override non-rotated
         if(waste<bestWaste||(waste===bestWaste&&splitSc>bestSplit*rotPenalty)){
           bestWaste=waste;bestSplit=splitSc;
           best={x:rect.x,y:rect.y,w:pw,h:ph,rect,rotated};
