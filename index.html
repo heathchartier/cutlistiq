@@ -1610,7 +1610,13 @@ function renderResults(){
     const sheetUsed=sheet.placements.reduce((s,p)=>s+p.w*p.h,0);
     const sheetWaste=(sheetArea-sheetUsed)/sheetArea*100;
     const wClass=sheetWaste<15?'waste-good':sheetWaste<35?'waste-mid':'waste-bad';
-    const scale=Math.min(680/sheet.w,380/sheet.h);
+    // Base scale to fit the canvas display area
+    const baseScale=Math.min(680/sheet.w,380/sheet.h);
+    // Boost scale if the smallest part would render below 6px — makes tiny parts visible
+    const minDim=sheet.placements.length?Math.min(...sheet.placements.map(p=>Math.min(p.w,p.h))):Infinity;
+    const scale=isFinite(minDim)&&minDim*baseScale<6
+      ?Math.min(6/minDim,Math.min(680/sheet.w,600/sheet.h))
+      :baseScale;
     const cw=Math.round(sheet.w*scale);
     const ch=Math.round(sheet.h*scale);
 
@@ -1652,15 +1658,16 @@ function renderResults(){
       sheet.placements.forEach(p=>{
         const px=Math.round(p.x*scale),py=Math.round(p.y*scale);
         const pw=Math.round(p.w*scale),ph=Math.round(p.h*scale);
-        // 2px white gap around every piece — eliminates bleed between adjacent pieces
+        // Adaptive gap: 1px for tiny parts (<8px in either dim), 2px for normal
+        const gap=Math.min(pw,ph)<8?1:2;
         ctx.fillStyle='#f8f4ec';
         ctx.fillRect(px,py,pw,ph);
-        // Solid opaque fill inset by 2px so neighbouring pieces never bleed
-        ctx.fillStyle=p.color+'e6'; // e6 = 90% opacity — solid, no see-through bleed
-        ctx.fillRect(px+2,py+2,Math.max(1,pw-4),Math.max(1,ph-4));
-        // Subtle dark inner border for clean separation
-        ctx.strokeStyle='rgba(0,0,0,0.18)';ctx.lineWidth=1;
-        ctx.strokeRect(px+2.5,py+2.5,Math.max(0,pw-5),Math.max(0,ph-5));
+        ctx.fillStyle=p.color+'e6'; // 90% opacity — solid, no see-through bleed
+        ctx.fillRect(px+gap,py+gap,Math.max(1,pw-2*gap),Math.max(1,ph-2*gap));
+        if(gap>=2){
+          ctx.strokeStyle='rgba(0,0,0,0.18)';ctx.lineWidth=1;
+          ctx.strokeRect(px+2.5,py+2.5,Math.max(0,pw-5),Math.max(0,ph-5));
+        }
 
         if(ebOn&&ebThick>0&&p.partRef&&p.partRef.eb){
           const eb=p.rotated?{t:p.partRef.eb.l,b:p.partRef.eb.r,l:p.partRef.eb.b,r:p.partRef.eb.t}:p.partRef.eb;
