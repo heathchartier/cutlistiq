@@ -2791,7 +2791,10 @@ function getCabParts(type,W,H,D,T,shelves,cabQty,matLabel,opts){
   const mat=matLabel||'';
   // Strip any leading thickness (e.g. "3/4 ", '1/2" ') before prepending "1/4 "
   const strippedMat=matLabel.replace(/^[\d\/]+"?\s+/,'');
-  const backMat=matLabel?'1/4 '+strippedMat:'1/4" Back';
+  // Only assign a distinct back mat when user specified a box material.
+  // If blank, leave back panels empty so matStrict stays false and all parts
+  // can be placed on any unlabeled stock without manual stock-label setup.
+  const backMat=matLabel?'1/4 '+strippedMat:'';
   const pfx=prefix?prefix+' – ':'';
   const r=n=>Math.round(n*1000)/1000;
   const part=(label,w,h,qty,m)=>({label:pfx+label,w:r(w),h:r(h),qty:qty*cabQty,mat:m!==undefined?m:mat});
