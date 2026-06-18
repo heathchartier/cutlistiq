@@ -114,9 +114,11 @@ Example: {"jobName":"Kings Display","parts":[{"label":"Side Panel","w":23.5,"h":
     });
 
     if (!response.ok) {
-      const err = await response.text();
-      console.error('Anthropic API error:', err);
-      return new Response(JSON.stringify({ error: 'AI service error' }), { status: 502, headers });
+      const errText = await response.text();
+      console.error('Anthropic API error:', errText);
+      let errMsg = 'AI service error';
+      try { errMsg = JSON.parse(errText)?.error?.message || errMsg; } catch {}
+      return new Response(JSON.stringify({ error: errMsg }), { status: 500, headers });
     }
 
     const data = await response.json();
