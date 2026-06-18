@@ -3325,12 +3325,14 @@ function handlePhotoFile(file){
     try{
       let base64,mimeType;
       if(file.type==='application/pdf'){
+        setStatus('photo-status','loading','Reading PDF…');
         const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(file);});
         base64=dataUrl.split(',')[1];mimeType='application/pdf';
       }else{
-        // Compress to max 1600px — reduces a 4MB iPhone photo to ~150-300KB
+        setStatus('photo-status','loading',`Compressing image (${(file.size/1024).toFixed(0)}KB → AI-ready)…`);
         const compressed=await compressImageForUpload(file,1600,0.85);
         base64=compressed.base64;mimeType=compressed.mimeType;
+        setStatus('photo-status','loading',`Sending to AI (${(base64.length*0.75/1024).toFixed(0)}KB)… this may take 15–30 seconds.`);
       }
 
       const resp=await fetch('/api/analyze-image',{
