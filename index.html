@@ -1864,6 +1864,7 @@ function loadDemo(){
 // ── CLEAR ─────────────────────────────────────────────────────────────────────
 function clearAll(){
   stocks=[];parts=[];results=null;stockCosts=[];
+  clearTimeout(saveTimer); // cancel any pending auto-save before wiping localStorage
   renderStocks();renderParts();
   document.getElementById('results-empty').style.display='flex';
   document.getElementById('results-panel').style.display='none';
@@ -1872,9 +1873,10 @@ function clearAll(){
   ['proj-name','proj-client','proj-date','proj-quote'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
-  if(appMode==='pro') renderCostInputs();
   localStorage.removeItem('cutlistiq_save');
   showSaveStatus('Cleared');
+  // Re-apply Pro mode so Cabinet Builder stays accessible after reset
+  if(appMode==='pro') setMode('pro');
   showMobileInputs(); // return to inputs panel on mobile
 }
 
