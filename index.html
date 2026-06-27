@@ -1058,6 +1058,7 @@ let parts     = [];
 let optMethod = 'guillotine';
 let results   = null;
 let appMode   = 'quick'; // always start quick — applyAuthMode() sets pro after auth check
+let proTabReady=false;  // true after first Pro tab switch — prevents auth refresh from hijacking active tab
 let stockCosts= [];
 let saveTimer = null;
 let importPending = [];
@@ -1875,8 +1876,9 @@ function clearAll(){
   });
   localStorage.removeItem('cutlistiq_save');
   showSaveStatus('Cleared');
-  // Re-apply Pro mode so Cabinet Builder stays accessible after reset
-  if(appMode==='pro') setMode('pro');
+  // Re-apply Pro mode so Cabinet Builder stays accessible after reset.
+  // Reset proTabReady so the tab switch fires once on the clean slate.
+  if(appMode==='pro'){proTabReady=false;setMode('pro');}
   showMobileInputs(); // return to inputs panel on mobile
 }
 
@@ -2026,7 +2028,10 @@ function setMode(mode){
       if(!results){
         document.getElementById('results-empty').style.display='none';
         document.getElementById('results-panel').style.display='flex';
-        switchTab('cabinet');
+        // Only auto-switch to Cabinet Builder on first Pro activation or after Reset.
+        // Subsequent auth refreshes (Alt+Tab triggers Supabase token check) must NOT
+        // hijack whatever tab the user is currently working on.
+        if(!proTabReady){proTabReady=true;switchTab('cabinet');}
       }
       initCabinetBuilder();
     } else {
