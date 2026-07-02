@@ -1166,7 +1166,6 @@ function toggleEBSection(){
   renderParts();
 }
 function switchTab(name){
-  if(name==='cabinet') console.error('SWITCHTAB cabinet — caller:',new Error().stack);
   localStorage.setItem('cutlistiq_active_tab',name);
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
@@ -2321,11 +2320,7 @@ async function initSupabase(){
     updateAuthUI();
     applyAuthMode();
     // Handle email confirmation redirect — user clicks confirm link and lands here signed in
-    if(event==='SIGNED_IN'){
-      await checkPendingPlan();
-      // Switch to Cabinet Builder when user signs in as Pro for the first time this session
-      if(appMode==='pro'&&!results){const lastTab=localStorage.getItem('cutlistiq_active_tab');switchTab(lastTab||'cabinet');}
-    }
+    if(event==='SIGNED_IN') await checkPendingPlan();
   });
   updateAuthUI();
   applyAuthMode();
