@@ -700,13 +700,13 @@ body.print-summary .print-header{display:block!important}
   <div class="summary-grid" id="summary-grid"></div>
 
   <div class="tab-bar">
-    <button class="tab active" onclick="switchTab('layouts')">Sheet Layouts</button>
-    <button class="tab" onclick="switchTab('cutlist')">Cut List</button>
-    <button class="tab" onclick="switchTab('waste')">Waste Analysis</button>
-    <button class="tab" id="tab-btn-edgebanding" style="display:none" onclick="switchTab('edgebanding')">Edge Banding</button>
-    <button class="tab" id="tab-btn-cabinet" style="display:none" onclick="switchTab('cabinet')">🗄 Cabinet Builder</button>
-    <button class="tab" id="tab-btn-lumber" style="display:none" onclick="switchTab('lumber')">🪵 Lumber &amp; Trim</button>
-    <button class="tab" id="tab-btn-ai" style="display:none" onclick="switchTab('ai')">✦ AI Insights</button>
+    <button class="tab active" tabindex="-1" onclick="switchTab('layouts')">Sheet Layouts</button>
+    <button class="tab" tabindex="-1" onclick="switchTab('cutlist')">Cut List</button>
+    <button class="tab" tabindex="-1" onclick="switchTab('waste')">Waste Analysis</button>
+    <button class="tab" tabindex="-1" id="tab-btn-edgebanding" style="display:none" onclick="switchTab('edgebanding')">Edge Banding</button>
+    <button class="tab" tabindex="-1" id="tab-btn-cabinet" style="display:none" onclick="switchTab('cabinet')">🗄 Cabinet Builder</button>
+    <button class="tab" tabindex="-1" id="tab-btn-lumber" style="display:none" onclick="switchTab('lumber')">🪵 Lumber &amp; Trim</button>
+    <button class="tab" tabindex="-1" id="tab-btn-ai" style="display:none" onclick="switchTab('ai')">✦ AI Insights</button>
   </div>
 
   <div class="tab-content active" id="tab-layouts">
