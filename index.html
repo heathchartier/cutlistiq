@@ -1166,6 +1166,7 @@ function toggleEBSection(){
   renderParts();
 }
 function switchTab(name){
+  localStorage.setItem('cutlistiq_active_tab',name);
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   // Activate the button that calls this tab
@@ -2322,13 +2323,16 @@ async function initSupabase(){
     if(event==='SIGNED_IN'){
       await checkPendingPlan();
       // Switch to Cabinet Builder when user signs in as Pro for the first time this session
-      if(appMode==='pro'&&!results) switchTab('cabinet');
+      if(appMode==='pro'&&!results){const lastTab=localStorage.getItem('cutlistiq_active_tab');switchTab(lastTab||'cabinet');}
     }
   });
   updateAuthUI();
   applyAuthMode();
-  // On initial page load, switch to Cabinet Builder if already Pro (not on every auth refresh)
-  if(appMode==='pro'&&!results) switchTab('cabinet');
+  // On initial page load, restore the last active tab (or default to cabinet for Pro users)
+  if(appMode==='pro'&&!results){
+    const lastTab=localStorage.getItem('cutlistiq_active_tab');
+    switchTab(lastTab||'cabinet');
+  }
   await handleCheckoutReturn();
 }
 
