@@ -1877,7 +1877,7 @@ function clearAll(){
   localStorage.removeItem('cutlistiq_save');
   showSaveStatus('Cleared');
   // Re-apply Pro mode so Cabinet Builder stays accessible after reset.
-  if(appMode==='pro'){setMode('pro');switchTab('cabinet');}
+  if(appMode==='pro') setMode('pro');
   showMobileInputs(); // return to inputs panel on mobile
 }
 
@@ -2324,10 +2324,10 @@ async function initSupabase(){
   });
   updateAuthUI();
   applyAuthMode();
-  // On initial page load, restore the last active tab (or default to cabinet for Pro users)
-  if(appMode==='pro'&&!results){
-    const lastTab=localStorage.getItem('cutlistiq_active_tab');
-    switchTab(lastTab||'cabinet');
+  // Pulse the Cabinet Builder tab briefly to draw attention without auto-switching
+  if(appMode==='pro'&&!results&&!localStorage.getItem('cutlistiq_active_tab')){
+    const cabBtn=document.getElementById('tab-btn-cabinet');
+    if(cabBtn){cabBtn.style.animation='pulse 1s ease 3';setTimeout(()=>{cabBtn.style.animation='';},3500);}
   }
   await handleCheckoutReturn();
 }
